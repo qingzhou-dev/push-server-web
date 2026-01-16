@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-border: #e2e8f0;
+  --app-primary: #2563eb;
+  --app-primary-strong: #1d4ed8;
+  --app-text: #0f172a;
+  --app-muted: #64748b;
+  --app-sidebar: #0f172a;
+  --app-sidebar-muted: #94a3b8;
+  --app-sidebar-active: #38bdf8;
+  --app-card-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --app-radius: 16px;
+  --el-color-primary: var(--app-primary);
+  --el-border-color-lighter: var(--app-border);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Manrope', 'Noto Sans', sans-serif;
+  color: var(--app-text);
+  background: radial-gradient(circle at top, #fefce8 0%, #f8fafc 42%, #e0f2fe 100%);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.2);
+}
