@@ -1,8 +1,9 @@
-import type { Component } from 'vue'
+﻿import type { Component } from 'vue'
 import {
   Bell,
   Connection,
   DataAnalysis,
+  Key,
   Setting,
   Tools,
   UserFilled,
@@ -17,7 +18,7 @@ export type NavItem = {
 
 export const navigation: NavItem[] = [
   {
-    title: '运营总览',
+    title: '运营概览',
     path: '/dashboard',
     icon: DataAnalysis,
   },
@@ -25,6 +26,11 @@ export const navigation: NavItem[] = [
     title: '应用管理',
     path: '/apps',
     icon: Connection,
+  },
+  {
+    title: 'API 密钥',
+    path: '/apps/keys',
+    icon: Key,
   },
   {
     title: '消息中心',
@@ -37,7 +43,7 @@ export const navigation: NavItem[] = [
     icon: Setting,
     children: [
       {
-        title: '账号管理',
+        title: '账户管理',
         path: '/system/users',
         icon: UserFilled,
       },
@@ -49,3 +55,6 @@ export const navigation: NavItem[] = [
     ],
   },
 ]
+
+
+

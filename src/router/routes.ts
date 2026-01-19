@@ -1,8 +1,9 @@
-import type { RouteRecordRaw } from 'vue-router'
+﻿import type { RouteRecordRaw } from 'vue-router'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import DashboardView from '@/views/dashboard/DashboardView.vue'
 import AppsView from '@/views/apps/AppsView.vue'
+import ApiKeysView from '@/views/apps/ApiKeysView.vue'
 import MessagesView from '@/views/messages/MessagesView.vue'
 import LoginView from '@/views/LoginView.vue'
 import UsersView from '@/views/system/UsersView.vue'
@@ -19,7 +20,7 @@ export const adminRoutes: RouteRecordRaw = {
       name: 'Dashboard',
       component: DashboardView,
       meta: {
-        title: '运营总览',
+        title: '运营概览',
       },
     },
     {
@@ -28,6 +29,15 @@ export const adminRoutes: RouteRecordRaw = {
       component: AppsView,
       meta: {
         title: '应用管理',
+        group: '业务管理',
+      },
+    },
+    {
+      path: 'apps/keys',
+      name: 'ApiKeys',
+      component: ApiKeysView,
+      meta: {
+        title: 'API 密钥',
         group: '业务管理',
       },
     },
@@ -45,7 +55,7 @@ export const adminRoutes: RouteRecordRaw = {
       name: 'Users',
       component: UsersView,
       meta: {
-        title: '账号管理',
+        title: '账户管理',
         group: '系统管理',
       },
     },
@@ -80,3 +90,4 @@ export const routes: RouteRecordRaw[] = [
     },
   },
 ]
+

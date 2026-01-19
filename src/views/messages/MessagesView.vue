@@ -1,11 +1,13 @@
 ﻿<script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
-import { fetchApps } from '@/api/apps'
+import { useRouter } from 'vue-router'
+import { fetchAppApiKey, fetchApps } from '@/api/apps'
 import { fetchMessageLogs, sendMessage } from '@/api/messages'
 import type {
   PortalAppResponse,
+  PortalAppApiKeyResponse,
   PortalMessageArticle,
   PortalMessageLogResponse,
 } from '@/api/types'
@@ -32,10 +34,16 @@ const createEmptyArticle = (): PortalMessageArticle => ({
   picUrl: '',
 })
 
+const router = useRouter()
 const apps = ref<PortalAppResponse[]>([])
 const logs = ref<PortalMessageLogResponse[]>([])
 const isLoading = ref(false)
 const isSending = ref(false)
+const isAppsLoading = ref(false)
+const sampleAppId = ref<number | null>(null)
+const sampleKeyInfo = ref<PortalAppApiKeyResponse | null>(null)
+const sampleKeyLoading = ref(false)
+const sampleLanguage = ref<'curl' | 'node' | 'python'>('curl')
 
 const form = reactive<MessageForm>({
   appId: 0,
@@ -51,6 +59,19 @@ const form = reactive<MessageForm>({
   articles: [createEmptyArticle()],
 })
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '')
+const openApiUrl = computed(() => `${apiBaseUrl}/v2/openapi/messages/send`)
+const sampleLanguageOptions = [
+  { label: 'cURL', value: 'curl' },
+  { label: 'Node.js (axios)', value: 'node' },
+  { label: 'Python (requests)', value: 'python' },
+]
+const sampleApiKey = computed(() => sampleKeyInfo.value?.apiKey || '')
+const hasSampleKey = computed(() => sampleKeyInfo.value?.hasKey ?? false)
+const sampleRateLimit = computed(
+  () => sampleKeyInfo.value?.rateLimitPerMinute ?? null,
+)
+
 const formatDate = (value?: number) => {
   if (!value) {
     return '--'
@@ -59,13 +80,19 @@ const formatDate = (value?: number) => {
 }
 
 const loadApps = async () => {
+  isAppsLoading.value = true
   try {
     apps.value = await fetchApps()
     if (!form.appId && apps.value.length) {
       form.appId = apps.value[0].id
     }
+    if (!sampleAppId.value && apps.value.length) {
+      sampleAppId.value = apps.value[0].id
+    }
   } catch (error) {
     ElMessage.error('获取应用列表失败')
+  } finally {
+    isAppsLoading.value = false
   }
 }
 
@@ -77,6 +104,17 @@ const loadLogs = async () => {
     ElMessage.error('获取消息日志失败')
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadSampleKey = async (appId: number) => {
+  sampleKeyLoading.value = true
+  try {
+    sampleKeyInfo.value = await fetchAppApiKey(appId)
+  } catch (error) {
+    sampleKeyInfo.value = null
+  } finally {
+    sampleKeyLoading.value = false
   }
 }
 
@@ -215,6 +253,150 @@ const formatLogContent = (row: PortalMessageLogResponse) => {
   return row.content || row.title || row.description || '--'
 }
 
+const cleanPayload = (payload: Record<string, any>) =>
+  Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return false
+      }
+      if (Array.isArray(value)) {
+        return value.length > 0
+      }
+      return true
+    }),
+  )
+
+const buildSamplePayload = () => {
+  const payload: Record<string, any> = {
+    toAll: form.toAll,
+    toUser: form.toAll ? undefined : form.toUser.trim() || 'user1|user2',
+    toParty: form.toAll ? undefined : form.toParty.trim() || 'party1|party2',
+    msgType: form.msgType,
+  }
+
+  if (form.msgType === 'TEXT' || form.msgType === 'MARKDOWN') {
+    payload.content = form.content.trim() || '你好，这是一条示例消息'
+  } else if (form.msgType === 'TEXT_CARD') {
+    payload.title = form.title.trim() || '示例标题'
+    payload.description =
+      form.description.trim() || '这是一段图文卡片示例描述'
+    payload.url = form.url.trim() || 'https://example.com'
+    if (form.btnText.trim()) {
+      payload.btnText = form.btnText.trim()
+    }
+  } else if (form.msgType === 'NEWS') {
+    const articles =
+      form.articles
+        .map((article) => ({
+          title: article.title.trim(),
+          url: article.url.trim(),
+          description: article.description?.trim() || undefined,
+          picUrl: article.picUrl?.trim() || undefined,
+        }))
+        .filter((article) => article.title || article.url) || []
+
+    payload.articles =
+      articles.length > 0
+        ? articles
+        : [
+            {
+              title: '示例文章标题',
+              description: '示例文章描述',
+              url: 'https://example.com/news',
+              picUrl: 'https://example.com/image.png',
+            },
+          ]
+  }
+
+  return cleanPayload(payload)
+}
+
+const samplePayload = computed(() => buildSamplePayload())
+const samplePayloadJson = computed(() =>
+  JSON.stringify(samplePayload.value, null, 2),
+)
+
+const sampleSnippet = computed(() => {
+  const key = sampleApiKey.value || 'YOUR_API_KEY'
+  const jsonBody = samplePayloadJson.value
+
+  if (sampleLanguage.value === 'node') {
+    return `import axios from 'axios'
+
+const apiKey = '${key}'
+const client = axios.create({ baseURL: '${apiBaseUrl}' })
+
+async function sendMessage() {
+  const payload = ${jsonBody}
+
+  await client.post('/v2/openapi/messages/send', payload, {
+    headers: { 'X-API-Key': apiKey },
+  })
+}
+
+sendMessage().catch(console.error)
+`
+  }
+
+  if (sampleLanguage.value === 'python') {
+    return `import requests
+
+api_key = '${key}'
+url = '${openApiUrl.value}'
+
+payload = ${jsonBody}
+
+resp = requests.post(url, json=payload, headers={'X-API-Key': api_key})
+print(resp.status_code, resp.text)
+`
+  }
+
+  return `curl -X POST "${openApiUrl.value}" \\
+  -H "X-API-Key: ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '${jsonBody.replace(/'/g, "'\\\\''")}'`
+})
+
+const copySampleKey = async () => {
+  if (!sampleApiKey.value) return
+  try {
+    await navigator.clipboard.writeText(sampleApiKey.value)
+    ElMessage.success('API Key 已复制')
+  } catch (error) {
+    ElMessage.error('复制失败，请手动复制')
+  }
+}
+
+const copySampleSnippet = async () => {
+  try {
+    await navigator.clipboard.writeText(sampleSnippet.value)
+    ElMessage.success('示例已复制')
+  } catch (error) {
+    ElMessage.error('复制失败，请手动复制')
+  }
+}
+
+const goToApiKeys = () => {
+  router.push('/apps/keys')
+}
+
+watch(sampleAppId, (appId) => {
+  if (appId) {
+    loadSampleKey(appId)
+  } else {
+    sampleKeyInfo.value = null
+  }
+})
+
+watch(
+  () => form.appId,
+  (appId) => {
+    if (!sampleAppId.value && appId) {
+      sampleAppId.value = appId
+    }
+  },
+)
+
 onMounted(() => {
   loadApps()
   loadLogs()
@@ -247,7 +429,11 @@ onMounted(() => {
 
           <el-form :model="form" label-width="100px" class="stack-form">
             <el-form-item label="应用">
-              <el-select v-model="form.appId" placeholder="选择应用">
+              <el-select
+                v-model="form.appId"
+                placeholder="选择应用"
+                :loading="isAppsLoading"
+              >
                 <el-option
                   v-for="app in apps"
                   :key="app.id"
@@ -374,6 +560,102 @@ onMounted(() => {
           <template #header>
             <div class="panel-header">
               <div>
+                <h3>OpenAPI 示例</h3>
+                <p>基于所选应用的 API Key 生成多语言调用样例</p>
+              </div>
+              <el-button
+                text
+                :icon="RefreshRight"
+                :disabled="!sampleAppId"
+                :loading="sampleKeyLoading"
+                @click="sampleAppId && loadSampleKey(sampleAppId)"
+              >
+                刷新 Key
+              </el-button>
+            </div>
+          </template>
+
+          <el-form label-width="90px" class="stack-form">
+            <el-form-item label="应用">
+              <el-select
+                v-model="sampleAppId"
+                placeholder="选择应用"
+                :loading="isAppsLoading"
+              >
+                <el-option
+                  v-for="app in apps"
+                  :key="app.id"
+                  :label="app.name || app.agentId"
+                  :value="app.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="API Key">
+              <el-input
+                :model-value="sampleApiKey"
+                placeholder="未生成"
+                readonly
+              >
+                <template #append>
+                  <el-button
+                    text
+                    :disabled="!sampleApiKey"
+                    @click="copySampleKey"
+                  >
+                    复制
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-form>
+
+          <el-alert
+            v-if="sampleAppId && !hasSampleKey && !sampleKeyLoading"
+            title="当前应用尚未生成 API Key"
+            type="warning"
+            show-icon
+            class="mb-12"
+          >
+            <template #description>
+              前往 API 密钥页面生成后，即可使用 OpenAPI 发送消息。
+              <el-button type="primary" link @click="goToApiKeys">
+                去生成
+              </el-button>
+            </template>
+          </el-alert>
+
+          <div class="sample-meta">
+            <div>接口：{{ openApiUrl }}</div>
+            <div>
+              限流：{{ sampleRateLimit === null ? '不限' : sampleRateLimit + ' 次/分钟' }}
+            </div>
+          </div>
+
+          <div class="sample-actions">
+            <el-radio-group v-model="sampleLanguage" size="small">
+              <el-radio-button
+                v-for="lang in sampleLanguageOptions"
+                :key="lang.value"
+                :label="lang.value"
+              >
+                {{ lang.label }}
+              </el-radio-button>
+            </el-radio-group>
+
+            <div class="sample-actions__right">
+              <el-button text type="primary" @click="copySampleSnippet">
+                复制示例
+              </el-button>
+            </div>
+          </div>
+
+          <pre class="code-block">{{ sampleSnippet }}</pre>
+        </el-card>
+
+        <el-card class="panel-card">
+          <template #header>
+            <div class="panel-header">
+              <div>
                 <h3>发送日志</h3>
                 <p>最近 20 条消息记录</p>
               </div>
@@ -453,7 +735,50 @@ onMounted(() => {
   margin-bottom: 8px;
   font-weight: 600;
 }
+
+.sample-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  color: #606266;
+  font-size: 12px;
+}
+
+.sample-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sample-actions__right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.code-block {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.mb-12 {
+  margin-bottom: 12px;
+}
 </style>
+
+
+
 
 
 

@@ -15,6 +15,15 @@ export interface PortalAppResponse {
   updatedAt: number
 }
 
+export interface PortalAppApiKeyResponse {
+  appId: number
+  hasKey: boolean
+  apiKey?: string | null
+  rateLimitPerMinute?: number | null
+  createdAt?: number | null
+  updatedAt?: number | null
+}
+
 export interface PortalMessageArticle {
   title: string
   url: string
