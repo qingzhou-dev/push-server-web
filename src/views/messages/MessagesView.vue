@@ -1,28 +1,54 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { fetchApps } from '@/api/apps'
 import { fetchMessageLogs, sendMessage } from '@/api/messages'
-import type { PortalAppResponse, PortalMessageLogResponse } from '@/api/types'
+import type {
+  PortalAppResponse,
+  PortalMessageArticle,
+  PortalMessageLogResponse,
+} from '@/api/types'
 import type { MessageType } from '@/api/messages'
+
+type MessageForm = {
+  appId: number
+  toUser: string
+  toParty: string
+  toAll: boolean
+  msgType: MessageType
+  content: string
+  title: string
+  description: string
+  url: string
+  btnText: string
+  articles: PortalMessageArticle[]
+}
+
+const createEmptyArticle = (): PortalMessageArticle => ({
+  title: '',
+  url: '',
+  description: '',
+  picUrl: '',
+})
 
 const apps = ref<PortalAppResponse[]>([])
 const logs = ref<PortalMessageLogResponse[]>([])
 const isLoading = ref(false)
 const isSending = ref(false)
 
-const form = reactive({
+const form = reactive<MessageForm>({
   appId: 0,
   toUser: '',
   toParty: '',
   toAll: false,
-  msgType: 'TEXT' as MessageType,
+  msgType: 'TEXT',
   content: '',
   title: '',
   description: '',
   url: '',
   btnText: '',
+  articles: [createEmptyArticle()],
 })
 
 const formatDate = (value?: number) => {
@@ -54,32 +80,80 @@ const loadLogs = async () => {
   }
 }
 
+const resetArticles = () => {
+  form.articles.splice(0, form.articles.length, createEmptyArticle())
+}
+
 const resetContentFields = () => {
   form.content = ''
   form.title = ''
   form.description = ''
   form.url = ''
   form.btnText = ''
+  resetArticles()
 }
 
 const handleMsgTypeChange = () => {
   resetContentFields()
 }
 
-const handleSend = async () => {
-  if (!form.appId) {
-    ElMessage.warning('请选择应用')
+const addArticle = () => {
+  form.articles.push(createEmptyArticle())
+}
+
+const removeArticle = (index: number) => {
+  if (form.articles.length === 1) {
+    form.articles.splice(index, 1, createEmptyArticle())
     return
   }
+  form.articles.splice(index, 1)
+}
+
+const handleSend = async () => {
+  if (!form.appId) {
+    ElMessage.warning('请先选择应用')
+    return
+  }
+
+  let articlesPayload: PortalMessageArticle[] | undefined
+
   if (form.msgType === 'TEXT' || form.msgType === 'MARKDOWN') {
     if (!form.content.trim()) {
       ElMessage.warning('请输入消息内容')
       return
     }
   }
+
   if (form.msgType === 'TEXT_CARD') {
     if (!form.title.trim() || !form.description.trim() || !form.url.trim()) {
       ElMessage.warning('请完善图文卡片信息')
+      return
+    }
+  }
+
+  if (form.msgType === 'NEWS') {
+    articlesPayload = form.articles
+      .map((article) => ({
+        title: article.title.trim(),
+        url: article.url.trim(),
+        description: article.description?.trim() || undefined,
+        picUrl: article.picUrl?.trim() || undefined,
+      }))
+      .filter(
+        (article) =>
+          article.title || article.url || article.description || article.picUrl,
+      )
+
+    if (!articlesPayload.length) {
+      ElMessage.warning('请至少添加一条图文消息')
+      return
+    }
+
+    const hasInvalidArticle = articlesPayload.some(
+      (article) => !article.title || !article.url,
+    )
+    if (hasInvalidArticle) {
+      ElMessage.warning('每条图文需要填写标题和链接')
       return
     }
   }
@@ -100,7 +174,11 @@ const handleSend = async () => {
       description:
         form.msgType === 'TEXT_CARD' ? form.description.trim() : undefined,
       url: form.msgType === 'TEXT_CARD' ? form.url.trim() : undefined,
-      btnText: form.msgType === 'TEXT_CARD' ? form.btnText.trim() : undefined,
+      btnText:
+        form.msgType === 'TEXT_CARD'
+          ? form.btnText.trim() || undefined
+          : undefined,
+      articles: form.msgType === 'NEWS' ? articlesPayload : undefined,
     })
     ElMessage.success('消息已发送')
     resetContentFields()
@@ -120,6 +198,23 @@ const formatTargets = (row: PortalMessageLogResponse) => {
   return targets.length ? targets.join(' / ') : '--'
 }
 
+const extractNewsPreview = (row: PortalMessageLogResponse) => {
+  const article = row.articles?.[0]
+  return {
+    title: article?.title || row.title,
+    description: article?.description || row.description,
+    url: article?.url || row.url,
+  }
+}
+
+const formatLogContent = (row: PortalMessageLogResponse) => {
+  if (row.msgType === 'NEWS') {
+    const preview = extractNewsPreview(row)
+    return preview.title || preview.description || preview.url || '--'
+  }
+  return row.content || row.title || row.description || '--'
+}
+
 onMounted(() => {
   loadApps()
   loadLogs()
@@ -131,7 +226,7 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <h1>消息中心</h1>
-        <p>选择应用并发送企业消息，查看发送记录</p>
+        <p>选择应用发送企业消息，查看发送记录</p>
       </div>
       <div class="page-actions">
         <el-button :icon="RefreshRight" @click="loadLogs">刷新日志</el-button>
@@ -144,8 +239,8 @@ onMounted(() => {
           <template #header>
             <div class="panel-header">
               <div>
-                <h3>发送消息</h3>
-                <p>支持文本、Markdown 与图文卡片</p>
+                <h3>消息发送</h3>
+                <p>支持文本、Markdown、图文卡片和图文消息</p>
               </div>
             </div>
           </template>
@@ -162,7 +257,7 @@ onMounted(() => {
               </el-select>
             </el-form-item>
             <el-form-item label="发送范围">
-              <el-switch v-model="form.toAll" active-text="全员推送" />
+              <el-switch v-model="form.toAll" active-text="全员" />
             </el-form-item>
             <el-form-item label="成员">
               <el-input
@@ -183,6 +278,7 @@ onMounted(() => {
                 <el-option label="文本" value="TEXT" />
                 <el-option label="Markdown" value="MARKDOWN" />
                 <el-option label="图文卡片" value="TEXT_CARD" />
+                <el-option label="图文" value="NEWS" />
               </el-select>
             </el-form-item>
 
@@ -197,7 +293,7 @@ onMounted(() => {
               </el-form-item>
             </template>
 
-            <template v-else>
+            <template v-else-if="form.msgType === 'TEXT_CARD'">
               <el-form-item label="标题">
                 <el-input v-model="form.title" placeholder="请输入卡片标题" />
               </el-form-item>
@@ -214,6 +310,49 @@ onMounted(() => {
               </el-form-item>
               <el-form-item label="按钮文案">
                 <el-input v-model="form.btnText" placeholder="可选" />
+              </el-form-item>
+            </template>
+
+            <template v-else>
+              <div
+                v-for="(article, index) in form.articles"
+                :key="index"
+                class="news-article"
+              >
+                <div class="news-article__header">
+                  <span>图文 {{ index + 1 }}</span>
+                  <el-button
+                    v-if="form.articles.length > 1"
+                    type="danger"
+                    text
+                    @click="removeArticle(index)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+                <el-form-item label="标题">
+                  <el-input v-model="article.title" placeholder="请输入文章标题" />
+                </el-form-item>
+                <el-form-item label="链接">
+                  <el-input v-model="article.url" placeholder="请输入跳转链接" />
+                </el-form-item>
+                <el-form-item label="描述">
+                  <el-input
+                    v-model="article.description"
+                    type="textarea"
+                    rows="3"
+                    placeholder="可选，简要介绍"
+                  />
+                </el-form-item>
+                <el-form-item label="封面">
+                  <el-input v-model="article.picUrl" placeholder="可选，图片地址" />
+                </el-form-item>
+              </div>
+
+              <el-form-item>
+                <el-button type="primary" text @click="addArticle">
+                  新增文章
+                </el-button>
               </el-form-item>
             </template>
 
@@ -256,15 +395,26 @@ onMounted(() => {
                 {{ formatTargets(scope.row) }}
               </template>
             </el-table-column>
-            <el-table-column label="内容" min-width="200">
-              <template #default="scope">
-                <span>
-                  {{
-                    scope.row.content ||
-                    scope.row.title ||
-                    scope.row.description ||
-                    '--'
-                  }}
+            <el-table-column label="内容" min-width="240">
+              <template #default="{ row }">
+                <template v-if="row.msgType === 'NEWS'">
+                  <div class="log-title">
+                    {{ extractNewsPreview(row).title || '--' }}
+                  </div>
+                  <div v-if="extractNewsPreview(row).description" class="log-sub">
+                    {{ extractNewsPreview(row).description }}
+                  </div>
+                  <el-link
+                    v-if="extractNewsPreview(row).url"
+                    :href="extractNewsPreview(row).url"
+                    target="_blank"
+                    type="primary"
+                  >
+                    {{ extractNewsPreview(row).url }}
+                  </el-link>
+                </template>
+                <span v-else>
+                  {{ formatLogContent(row) }}
                 </span>
               </template>
             </el-table-column>
@@ -287,3 +437,25 @@ onMounted(() => {
     </el-row>
   </section>
 </template>
+
+<style scoped>
+.news-article {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+}
+
+.news-article__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+</style>
+
+
+
+
+

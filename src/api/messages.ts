@@ -1,9 +1,12 @@
 import http from './http'
 import { ensureCsrfToken, unwrapPortalResponse } from './portal'
 import type { PortalResponse } from './portal'
-import type { PortalMessageLogResponse } from './types'
+import type {
+  PortalMessageArticle,
+  PortalMessageLogResponse,
+} from './types'
 
-export type MessageType = 'TEXT' | 'TEXT_CARD' | 'MARKDOWN'
+export type MessageType = 'TEXT' | 'TEXT_CARD' | 'MARKDOWN' | 'NEWS'
 
 export interface SendMessagePayload {
   appId: number
@@ -16,6 +19,7 @@ export interface SendMessagePayload {
   description?: string
   url?: string
   btnText?: string
+  articles?: PortalMessageArticle[]
 }
 
 export const sendMessage = async (payload: SendMessagePayload) => {

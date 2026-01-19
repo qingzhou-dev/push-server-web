@@ -15,6 +15,13 @@ export interface PortalAppResponse {
   updatedAt: number
 }
 
+export interface PortalMessageArticle {
+  title: string
+  url: string
+  description?: string
+  picUrl?: string
+}
+
 export interface PortalMessageLogResponse {
   id: number
   appId: number
@@ -27,6 +34,7 @@ export interface PortalMessageLogResponse {
   description?: string
   url?: string
   content?: string
+  articles?: PortalMessageArticle[]
   success: boolean
   errorMessage?: string | null
   createdAt: number
