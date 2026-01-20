@@ -293,23 +293,30 @@ const cleanPayload = (payload: Record<string, any>) =>
   )
 
 const buildSamplePayload = () => {
-  const payload: Record<string, any> = {
-    toAll: form.toAll,
-    toUser: form.toAll ? undefined : form.toUser.trim() || 'user1|user2',
-    toParty: form.toAll ? undefined : form.toParty.trim() || 'party1|party2',
-    msgType: form.msgType,
+  const payload: Record<string, any> = { msgType: form.msgType }
+
+  if (form.toAll) {
+    payload.toAll = true
+  } else {
+    const toUser = form.toUser.trim()
+    const toParty = form.toParty.trim()
+    if (toUser) payload.toUser = toUser
+    if (toParty) payload.toParty = toParty
   }
 
   if (form.msgType === 'TEXT' || form.msgType === 'MARKDOWN') {
-    payload.content = form.content.trim() || '你好，这是一条示例消息'
+    const content = form.content.trim()
+    if (content) payload.content = content
   } else if (form.msgType === 'TEXT_CARD') {
-    payload.title = form.title.trim() || '示例标题'
-    payload.description =
-      form.description.trim() || '这是一段图文卡片示例描述'
-    payload.url = form.url.trim() || 'https://example.com'
-    if (form.btnText.trim()) {
-      payload.btnText = form.btnText.trim()
-    }
+    const title = form.title.trim()
+    const description = form.description.trim()
+    const url = form.url.trim()
+    const btnText = form.btnText.trim()
+
+    if (title) payload.title = title
+    if (description) payload.description = description
+    if (url) payload.url = url
+    if (btnText) payload.btnText = btnText
   } else if (form.msgType === 'NEWS') {
     const articles =
       form.articles
@@ -319,19 +326,11 @@ const buildSamplePayload = () => {
           description: article.description?.trim() || undefined,
           picUrl: article.picUrl?.trim() || undefined,
         }))
-        .filter((article) => article.title || article.url) || []
+        .filter((article) => article.title || article.url)
 
-    payload.articles =
-      articles.length > 0
-        ? articles
-        : [
-            {
-              title: '示例文章标题',
-              description: '示例文章描述',
-              url: 'https://example.com/news',
-              picUrl: 'https://example.com/image.png',
-            },
-          ]
+    if (articles.length) {
+      payload.articles = articles
+    }
   }
 
   return cleanPayload(payload)
