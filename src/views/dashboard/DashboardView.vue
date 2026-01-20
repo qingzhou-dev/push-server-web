@@ -103,21 +103,50 @@ const trendPoints = computed(() => {
   }))
 })
 
+const getControlPoint = (
+  current: { x: number; y: number },
+  previous: { x: number; y: number },
+  next: { x: number; y: number },
+  reverse?: boolean,
+) => {
+  const p = previous || current
+  const n = next || current
+  const smoothing = 0.2
+  const o = { x: n.x - p.x, y: n.y - p.y }
+  const angle = Math.atan2(o.y, o.x) + (reverse ? Math.PI : 0)
+  const length = Math.sqrt(o.x ** 2 + o.y ** 2) * smoothing
+  const x = current.x + Math.cos(angle) * length
+  const y = current.y + Math.sin(angle) * length
+  return { x, y }
+}
+
+const getSmoothPath = (points: { x: number; y: number }[]) => {
+  if (points.length <= 1) return ''
+  let d = `M ${points[0].x} ${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[i + 2]
+    const cp1 = getControlPoint(p1, p0, p2)
+    const cp2 = getControlPoint(p2, p1, p3, true)
+    d += ` C ${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${p2.x} ${p2.y}`
+  }
+  return d
+}
+
 const trendPath = computed(() => {
   if (!trendPoints.value.length) return ''
-  const [first, ...rest] = trendPoints.value
-  return `M ${first.x} ${first.y} ${rest
-    .map((p) => `L ${p.x} ${p.y}`)
-    .join(' ')}`
+  return getSmoothPath(trendPoints.value)
 })
 
 const trendAreaPath = computed(() => {
-  if (!trendPoints.value.length) return ''
-  const [first, ...rest] = trendPoints.value
-  const last = rest[rest.length - 1] || first
-  return `M ${first.x} ${first.y} ${rest
-    .map((p) => `L ${p.x} ${p.y}`)
-    .join(' ')} L ${last.x} 42 L 0 42 Z`
+  const path = trendPath.value
+  if (!path || !trendPoints.value.length) return ''
+  const points = trendPoints.value
+  const last = points[points.length - 1]
+  const first = points[0]
+  return `${path} L ${last.x} 42 L ${first.x} 42 Z`
 })
 
 const distributionTotal = computed(
@@ -281,9 +310,23 @@ onMounted(() => {
                 </linearGradient>
               </defs>
               <path :d="trendAreaPath" fill="url(#trendFill)" />
-              <path :d="trendPath" stroke="#2563eb" stroke-width="1.6" fill="none" />
+              <path
+                :d="trendPath"
+                stroke="#2563eb"
+                stroke-width="3"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
               <g v-for="(p, idx) in trendPoints" :key="idx">
-                <circle :cx="p.x" :cy="p.y" r="1.4" fill="#2563eb" />
+                <circle
+                  :cx="p.x"
+                  :cy="p.y"
+                  r="3"
+                  fill="#fff"
+                  stroke="#2563eb"
+                  stroke-width="2"
+                />
                 <text
                   v-if="idx === trendPoints.length - 1"
                   :x="p.x + 1.5"
