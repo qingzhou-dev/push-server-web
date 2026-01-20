@@ -2,8 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
-  ArrowDown,
-  ArrowUp,
   Clock,
   Histogram,
   PieChart,
@@ -156,7 +154,7 @@ const loadStats = async () => {
   loadingStats.value = true
   try {
     stats.value = await fetchDashboardStats()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取统计数据失败')
   } finally {
     loadingStats.value = false
@@ -167,7 +165,7 @@ const loadCharts = async () => {
   loadingCharts.value = true
   try {
     charts.value = await fetchDashboardCharts()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取图表数据失败')
   } finally {
     loadingCharts.value = false
@@ -178,7 +176,7 @@ const loadRecentLogs = async () => {
   loadingLogs.value = true
   try {
     recentLogs.value = await fetchDashboardRecentLogs(recentLimit.value)
-  } catch (error) {
+  } catch {
     ElMessage.error('获取最新日志失败')
   } finally {
     loadingLogs.value = false

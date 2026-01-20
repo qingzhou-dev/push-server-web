@@ -25,7 +25,7 @@ const loadProfile = async () => {
   isLoading.value = true
   try {
     profile.value = await fetchMe()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取账号信息失败')
   } finally {
     isLoading.value = false
@@ -47,7 +47,7 @@ const handleRegister = async () => {
     registerForm.account = ''
     registerForm.password = ''
     ElMessage.success('账号已创建')
-  } catch (error) {
+  } catch {
     ElMessage.error('创建账号失败')
   } finally {
     isSubmitting.value = false

@@ -77,7 +77,7 @@ const loadApps = async () => {
   isAppsLoading.value = true
   try {
     apps.value = await fetchApps()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取应用列表失败')
   } finally {
     isAppsLoading.value = false
@@ -99,7 +99,7 @@ const loadLogs = async () => {
     })
     logs.value = result.records
     total.value = result.total
-  } catch (error) {
+  } catch {
     ElMessage.error('获取日志失败')
   } finally {
     isLoading.value = false

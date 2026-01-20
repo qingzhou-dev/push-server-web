@@ -105,7 +105,7 @@ const loadApps = async () => {
     if (!sampleAppId.value && apps.value.length) {
       sampleAppId.value = apps.value[0].id
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('获取应用列表失败')
   } finally {
     isAppsLoading.value = false
@@ -116,7 +116,7 @@ const loadSampleKey = async (appId: number) => {
   sampleKeyLoading.value = true
   try {
     sampleKeyInfo.value = await fetchAppApiKey(appId)
-  } catch (error) {
+  } catch {
     sampleKeyInfo.value = null
   } finally {
     sampleKeyLoading.value = false
@@ -225,7 +225,7 @@ const handleSend = async () => {
     })
     ElMessage.success('消息已发送')
     resetContentFields()
-  } catch (error) {
+  } catch {
     ElMessage.error('消息发送失败')
   } finally {
     isSending.value = false
@@ -415,7 +415,7 @@ const copySampleKey = async () => {
   try {
     await navigator.clipboard.writeText(sampleApiKey.value)
     ElMessage.success('API Key 已复制')
-  } catch (error) {
+  } catch {
     ElMessage.error('复制失败，请手动复制')
   }
 }
@@ -424,7 +424,7 @@ const copySampleSnippet = async () => {
   try {
     await navigator.clipboard.writeText(sampleSnippet.value)
     ElMessage.success('示例已复制')
-  } catch (error) {
+  } catch {
     ElMessage.error('复制失败，请手动复制')
   }
 }

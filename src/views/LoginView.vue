@@ -38,7 +38,7 @@ const refreshCaptcha = async () => {
   try {
     const blob = await fetchCaptcha()
     setCaptchaImage(blob)
-  } catch (error) {
+  } catch {
     captchaImage.value = `${normalizedApiBase}/captcha?t=${Date.now()}`
   }
 }
@@ -65,7 +65,7 @@ const handleLogin = async () => {
       ElMessage.error(response.msg || '登录失败')
       refreshCaptcha()
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('登录失败，请稍后重试')
     refreshCaptcha()
   } finally {
