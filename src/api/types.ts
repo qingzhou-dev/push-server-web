@@ -48,3 +48,10 @@ export interface PortalMessageLogResponse {
   errorMessage?: string | null
   createdAt: number
 }
+
+export interface PortalPageResponse<T> {
+  records: T[]
+  total: number
+  page: number
+  pageSize: number
+}

@@ -8,6 +8,7 @@ import MessagesView from '@/views/messages/MessagesView.vue'
 import LoginView from '@/views/LoginView.vue'
 import UsersView from '@/views/system/UsersView.vue'
 import SettingsView from '@/views/system/SettingsView.vue'
+import LogsView from '@/views/system/LogsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 export const adminRoutes: RouteRecordRaw = {
@@ -56,6 +57,15 @@ export const adminRoutes: RouteRecordRaw = {
       component: UsersView,
       meta: {
         title: '账户管理',
+        group: '系统管理',
+      },
+    },
+    {
+      path: 'system/logs',
+      name: 'Logs',
+      component: LogsView,
+      meta: {
+        title: '日志审计',
         group: '系统管理',
       },
     },

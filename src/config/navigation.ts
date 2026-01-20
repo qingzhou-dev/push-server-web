@@ -4,6 +4,7 @@ import {
   Connection,
   DataAnalysis,
   Key,
+  Document,
   Setting,
   Tools,
   UserFilled,
@@ -46,6 +47,11 @@ export const navigation: NavItem[] = [
         title: '账户管理',
         path: '/system/users',
         icon: UserFilled,
+      },
+      {
+        title: '日志审计',
+        path: '/system/logs',
+        icon: Document,
       },
       {
         title: '企业配置',

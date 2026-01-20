@@ -4,6 +4,7 @@ import type { PortalResponse } from './portal'
 import type {
   PortalMessageArticle,
   PortalMessageLogResponse,
+  PortalPageResponse,
 } from './types'
 
 export type MessageType = 'TEXT' | 'TEXT_CARD' | 'MARKDOWN' | 'NEWS'
@@ -36,5 +37,17 @@ export const fetchMessageLogs = async (limit = 20) => {
     '/v2/messages/logs',
     { params: { limit } },
   )
+  return unwrapPortalResponse(response)
+}
+
+export const fetchMessageLogsPaged = async (params: {
+  page: number
+  pageSize: number
+  appId?: number
+  success?: boolean
+}) => {
+  const response = await http.get<
+    PortalResponse<PortalPageResponse<PortalMessageLogResponse>>
+  >('/v2/messages/logs', { params })
   return unwrapPortalResponse(response)
 }
