@@ -606,7 +606,7 @@ onMounted(() => {
 }
 
 .recent-card {
-  margin-top: 4px;
+  margin-top: 20px;
 }
 
 .panel-actions {

@@ -166,7 +166,11 @@ onBeforeUnmount(() => {
             <div class="login-form">
               <div class="form-field">
                 <label>用户名 / 邮箱</label>
-                <el-input v-model="account" placeholder="请输入您的企业账号">
+                <el-input
+                  v-model="account"
+                  placeholder="请输入您的企业账号"
+                  @keyup.enter="handleLogin"
+                >
                   <template #prefix>
                     <el-icon>
                       <User />
@@ -182,6 +186,7 @@ onBeforeUnmount(() => {
                   placeholder="请输入密码"
                   type="password"
                   show-password
+                  @keyup.enter="handleLogin"
                 >
                   <template #prefix>
                     <el-icon>
@@ -194,7 +199,11 @@ onBeforeUnmount(() => {
               <div class="form-field">
                 <label>验证码</label>
                 <div class="captcha-row">
-                  <el-input v-model="captcha" placeholder="输入右侧验证码">
+                  <el-input
+                    v-model="captcha"
+                    placeholder="输入右侧验证码"
+                    @keyup.enter="handleLogin"
+                  >
                     <template #prefix>
                       <el-icon>
                         <Key />
