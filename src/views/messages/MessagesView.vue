@@ -27,6 +27,14 @@ type MessageForm = {
   articles: PortalMessageArticle[]
 }
 
+type SampleLanguage =
+  | 'curl'
+  | 'powershell'
+  | 'node'
+  | 'python'
+  | 'java'
+  | 'php'
+
 const createEmptyArticle = (): PortalMessageArticle => ({
   title: '',
   url: '',
@@ -43,7 +51,7 @@ const isAppsLoading = ref(false)
 const sampleAppId = ref<number | null>(null)
 const sampleKeyInfo = ref<PortalAppApiKeyResponse | null>(null)
 const sampleKeyLoading = ref(false)
-const sampleLanguage = ref<'curl' | 'node' | 'python'>('curl')
+const sampleLanguage = ref<SampleLanguage>('curl')
 
 const form = reactive<MessageForm>({
   appId: 0,
@@ -61,10 +69,28 @@ const form = reactive<MessageForm>({
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '')
 const openApiUrl = computed(() => `${apiBaseUrl}/v2/openapi/messages/send`)
+const resolveUrlWithHost = (url: string) => {
+  if (/^https?:\/\//i.test(url)) {
+    return url
+  }
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : ''
+  if (!origin) {
+    return url
+  }
+  return `${origin}${url.startsWith('/') ? '' : '/'}${url}`
+}
+const resolvedApiBaseUrl = computed(() => resolveUrlWithHost(apiBaseUrl))
+const resolvedOpenApiUrl = computed(() => resolveUrlWithHost(openApiUrl.value))
 const sampleLanguageOptions = [
   { label: 'cURL', value: 'curl' },
+  { label: 'PowerShell (Windows)', value: 'powershell' },
   { label: 'Node.js (axios)', value: 'node' },
   { label: 'Python (requests)', value: 'python' },
+  { label: 'Java (HttpClient)', value: 'java' },
+  { label: 'PHP (cURL)', value: 'php' },
 ]
 const sampleApiKey = computed(() => sampleKeyInfo.value?.apiKey || '')
 const hasSampleKey = computed(() => sampleKeyInfo.value?.hasKey ?? false)
@@ -324,7 +350,7 @@ const sampleSnippet = computed(() => {
     return `import axios from 'axios'
 
 const apiKey = '${key}'
-const client = axios.create({ baseURL: '${apiBaseUrl}' })
+const client = axios.create({ baseURL: '${resolvedApiBaseUrl.value}' })
 
 async function sendMessage() {
   const payload = ${jsonBody}
@@ -342,7 +368,7 @@ sendMessage().catch(console.error)
     return `import requests
 
 api_key = '${key}'
-url = '${openApiUrl.value}'
+url = '${resolvedOpenApiUrl.value}'
 
 payload = ${jsonBody}
 
@@ -351,7 +377,82 @@ print(resp.status_code, resp.text)
 `
   }
 
-  return `curl -X POST "${openApiUrl.value}" \\
+  if (sampleLanguage.value === 'powershell') {
+    return `$apiKey = '${key}'
+$uri = '${resolvedOpenApiUrl.value}'
+$body = @'
+${jsonBody}
+'@
+
+Invoke-RestMethod -Method Post -Uri $uri -Headers @{ "X-API-Key" = $apiKey } -ContentType "application/json" -Body $body
+`
+  }
+
+  if (sampleLanguage.value === 'java') {
+    return `import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class SendMessage {
+  public static void main(String[] args) throws Exception {
+    String apiKey = "${key}";
+    String json = """
+${jsonBody}
+""";
+
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create("${resolvedOpenApiUrl.value}"))
+        .header("X-API-Key", apiKey)
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(json))
+        .build();
+
+    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    System.out.println(response.statusCode());
+    System.out.println(response.body());
+  }
+}
+`
+  }
+
+  if (sampleLanguage.value === 'php') {
+    return `<?php
+$apiKey = '${key}';
+$url = '${resolvedOpenApiUrl.value}';
+
+$payloadJson = <<<'JSON'
+${jsonBody}
+JSON;
+
+$payload = json_decode($payloadJson, true);
+
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Content-Type: application/json',
+        'X-API-Key: ' . $apiKey,
+    ],
+    CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+]);
+
+$response = curl_exec($ch);
+
+if ($response === false) {
+    throw new RuntimeException(curl_error($ch));
+}
+
+echo curl_getinfo($ch, CURLINFO_HTTP_CODE) . PHP_EOL;
+echo $response;
+
+curl_close($ch);
+`
+  }
+
+  return `curl -X POST "${resolvedOpenApiUrl.value}" \\
   -H "X-API-Key: ${key}" \\
   -H "Content-Type: application/json" \\
   -d '${jsonBody.replace(/'/g, "'\\\\''")}'`
@@ -625,7 +726,7 @@ onMounted(() => {
           </el-alert>
 
           <div class="sample-meta">
-            <div>接口：{{ openApiUrl }}</div>
+            <div>接口：{{ resolvedOpenApiUrl }}</div>
             <div>
               限流：{{ sampleRateLimit === null ? '不限' : sampleRateLimit + ' 次/分钟' }}
             </div>
