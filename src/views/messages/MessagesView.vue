@@ -4,12 +4,11 @@ import { ElMessage } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { fetchAppApiKey, fetchApps } from '@/api/apps'
-import { fetchMessageLogs, sendMessage } from '@/api/messages'
+import { sendMessage } from '@/api/messages'
 import type {
   PortalAppResponse,
   PortalAppApiKeyResponse,
   PortalMessageArticle,
-  PortalMessageLogResponse,
 } from '@/api/types'
 import type { MessageType } from '@/api/messages'
 
@@ -44,8 +43,6 @@ const createEmptyArticle = (): PortalMessageArticle => ({
 
 const router = useRouter()
 const apps = ref<PortalAppResponse[]>([])
-const logs = ref<PortalMessageLogResponse[]>([])
-const isLoading = ref(false)
 const isSending = ref(false)
 const isAppsLoading = ref(false)
 const sampleAppId = ref<number | null>(null)
@@ -98,13 +95,6 @@ const sampleRateLimit = computed(
   () => sampleKeyInfo.value?.rateLimitPerMinute ?? null,
 )
 
-const formatDate = (value?: number) => {
-  if (!value) {
-    return '--'
-  }
-  return new Date(value).toLocaleString()
-}
-
 const loadApps = async () => {
   isAppsLoading.value = true
   try {
@@ -119,17 +109,6 @@ const loadApps = async () => {
     ElMessage.error('获取应用列表失败')
   } finally {
     isAppsLoading.value = false
-  }
-}
-
-const loadLogs = async () => {
-  isLoading.value = true
-  try {
-    logs.value = await fetchMessageLogs(20)
-  } catch (error) {
-    ElMessage.error('获取消息日志失败')
-  } finally {
-    isLoading.value = false
   }
 }
 
@@ -246,37 +225,11 @@ const handleSend = async () => {
     })
     ElMessage.success('消息已发送')
     resetContentFields()
-    loadLogs()
   } catch (error) {
     ElMessage.error('消息发送失败')
   } finally {
     isSending.value = false
   }
-}
-
-const formatTargets = (row: PortalMessageLogResponse) => {
-  if (row.toAll) {
-    return '全员'
-  }
-  const targets = [row.toUser, row.toParty].filter(Boolean)
-  return targets.length ? targets.join(' / ') : '--'
-}
-
-const extractNewsPreview = (row: PortalMessageLogResponse) => {
-  const article = row.articles?.[0]
-  return {
-    title: article?.title || row.title,
-    description: article?.description || row.description,
-    url: article?.url || row.url,
-  }
-}
-
-const formatLogContent = (row: PortalMessageLogResponse) => {
-  if (row.msgType === 'NEWS') {
-    const preview = extractNewsPreview(row)
-    return preview.title || preview.description || preview.url || '--'
-  }
-  return row.content || row.title || row.description || '--'
 }
 
 const cleanPayload = (payload: Record<string, any>) =>
@@ -499,7 +452,6 @@ watch(
 
 onMounted(() => {
   loadApps()
-  loadLogs()
 })
 </script>
 
@@ -508,10 +460,7 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <h1>消息中心</h1>
-        <p>选择应用发送企业消息，查看发送记录</p>
-      </div>
-      <div class="page-actions">
-        <el-button :icon="RefreshRight" @click="loadLogs">刷新日志</el-button>
+        <p>选择应用发送企业消息，并生成 OpenAPI 调用示例</p>
       </div>
     </div>
 
@@ -751,70 +700,6 @@ onMounted(() => {
 
           <pre class="code-block">{{ sampleSnippet }}</pre>
         </el-card>
-
-        <el-card class="panel-card">
-          <template #header>
-            <div class="panel-header">
-              <div>
-                <h3>发送日志</h3>
-                <p>最近 20 条消息记录</p>
-              </div>
-            </div>
-          </template>
-
-          <el-table v-loading="isLoading" :data="logs" style="width: 100%">
-            <el-table-column label="应用" min-width="120">
-              <template #default="scope">
-                <div class="log-app">
-                  <span class="log-title">{{ scope.row.agentId }}</span>
-                  <span class="log-sub">{{ scope.row.appId }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="msgType" label="类型" min-width="100" />
-            <el-table-column label="对象" min-width="160">
-              <template #default="scope">
-                {{ formatTargets(scope.row) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="内容" min-width="240">
-              <template #default="{ row }">
-                <template v-if="row.msgType === 'NEWS'">
-                  <div class="log-title">
-                    {{ extractNewsPreview(row).title || '--' }}
-                  </div>
-                  <div v-if="extractNewsPreview(row).description" class="log-sub">
-                    {{ extractNewsPreview(row).description }}
-                  </div>
-                  <el-link
-                    v-if="extractNewsPreview(row).url"
-                    :href="extractNewsPreview(row).url"
-                    target="_blank"
-                    type="primary"
-                  >
-                    {{ extractNewsPreview(row).url }}
-                  </el-link>
-                </template>
-                <span v-else>
-                  {{ formatLogContent(row) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="状态" min-width="110">
-              <template #default="scope">
-                <el-tag :type="scope.row.success ? 'success' : 'danger'">
-                  {{ scope.row.success ? '成功' : '失败' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="时间" min-width="160">
-              <template #default="scope">
-                {{ formatDate(scope.row.createdAt) }}
-              </template>
-            </el-table-column>
-          </el-table>
-          <el-empty v-if="!logs.length && !isLoading" description="暂无日志" />
-        </el-card>
       </el-col>
     </el-row>
   </section>
@@ -876,11 +761,3 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 </style>
-
-
-
-
-
-
-
-

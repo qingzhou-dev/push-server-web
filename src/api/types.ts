@@ -55,3 +55,33 @@ export interface PortalPageResponse<T> {
   page: number
   pageSize: number
 }
+
+export interface DashboardStatsResponse {
+  todayTotal: number
+  successRate: number
+  activeApps: number
+  lastErrorTime: string | null
+}
+
+export interface DashboardTrendPoint {
+  date: string
+  count: number
+}
+
+export interface DashboardDistributionItem {
+  name: string
+  value: number
+}
+
+export interface DashboardChartsResponse {
+  trend: DashboardTrendPoint[]
+  distribution: DashboardDistributionItem[]
+}
+
+export interface DashboardRecentLogItem {
+  time: string
+  appName: string
+  receiver: string
+  status: number
+  errorMsg: string
+}
