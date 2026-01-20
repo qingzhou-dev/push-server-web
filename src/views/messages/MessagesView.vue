@@ -563,7 +563,7 @@ onMounted(() => {
               <el-select v-model="form.msgType" @change="handleMsgTypeChange">
                 <el-option label="文本" value="TEXT" />
                 <el-option label="Markdown" value="MARKDOWN" />
-                <el-option label="图文卡片" value="TEXT_CARD" />
+                <el-option label="卡片" value="TEXT_CARD" />
                 <el-option label="图文" value="NEWS" />
               </el-select>
             </el-form-item>
