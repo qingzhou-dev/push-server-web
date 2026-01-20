@@ -40,7 +40,7 @@ const loadApps = async () => {
     if (!selectedAppId.value && apps.value.length) {
       selectedAppId.value = apps.value[0].id
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('获取应用列表失败')
   } finally {
     isLoadingApps.value = false
@@ -52,7 +52,7 @@ const loadApiKey = async (appId: number) => {
   try {
     apiKeyInfo.value = await fetchAppApiKey(appId)
     rateLimit.value = apiKeyInfo.value.rateLimitPerMinute ?? null
-  } catch (error) {
+  } catch {
     apiKeyInfo.value = null
     rateLimit.value = null
   } finally {
@@ -70,7 +70,7 @@ const handleGenerate = async () => {
     await createAppApiKey(selectedAppId.value)
     ElMessage.success('已生成新的 API Key')
     loadApiKey(selectedAppId.value)
-  } catch (error) {
+  } catch {
     ElMessage.error('生成密钥失败')
   } finally {
     isMutating.value = false
@@ -89,7 +89,7 @@ const handleDelete = async () => {
         cancelButtonText: '取消',
       },
     )
-  } catch (error) {
+  } catch {
     return
   }
 
@@ -99,7 +99,7 @@ const handleDelete = async () => {
     ElMessage.success('已删除 API Key')
     apiKeyInfo.value = null
     rateLimit.value = null
-  } catch (error) {
+  } catch {
     ElMessage.error('删除失败')
   } finally {
     isMutating.value = false
@@ -115,7 +115,7 @@ const handleUpdateRateLimit = async () => {
     })
     ElMessage.success('已更新限流配置')
     loadApiKey(selectedAppId.value)
-  } catch (error) {
+  } catch {
     ElMessage.error('更新限流失败')
   } finally {
     isMutating.value = false
@@ -127,7 +127,7 @@ const handleCopyKey = async () => {
   try {
     await navigator.clipboard.writeText(apiKeyValue.value)
     ElMessage.success('已复制 API Key')
-  } catch (error) {
+  } catch {
     ElMessage.error('复制失败，请手动选择复制')
   }
 }

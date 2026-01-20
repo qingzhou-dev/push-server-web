@@ -7,36 +7,27 @@ import axios, {
 } from 'axios'
 import { ElMessage } from 'element-plus'
 
-type HttpInstance = AxiosInstance & {
-  get<T = any, R = T, D = any>(
-    url: string,
-    config?: AxiosRequestConfig<D>,
-  ): Promise<R>
-  post<T = any, R = T, D = any>(
-    url: string,
-    data?: D,
-    config?: AxiosRequestConfig<D>,
-  ): Promise<R>
-  put<T = any, R = T, D = any>(
-    url: string,
-    data?: D,
-    config?: AxiosRequestConfig<D>,
-  ): Promise<R>
-  delete<T = any, R = T, D = any>(
-    url: string,
-    config?: AxiosRequestConfig<D>,
-  ): Promise<R>
+// Define a custom interface that matches the unwrapped response behavior
+interface Http {
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
+  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  // Expose defaults and interceptors if needed
+  defaults: AxiosInstance['defaults']
+  interceptors: AxiosInstance['interceptors']
 }
 
-const http = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   timeout: 10000,
   withCredentials: true,
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',
-}) as HttpInstance
+})
 
-http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('access_token')
   if (token) {
     config.headers.set('Authorization', `Bearer ${token}`)
@@ -44,7 +35,7 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-http.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   (error: AxiosError<{ message?: string }>) => {
     const message =
@@ -53,5 +44,7 @@ http.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+const http = axiosInstance as unknown as Http
 
 export default http

@@ -26,7 +26,7 @@ const loadApps = async () => {
   isLoading.value = true
   try {
     apps.value = await fetchApps()
-  } catch (error) {
+  } catch {
     ElMessage.error('获取应用列表失败')
   } finally {
     isLoading.value = false
@@ -54,7 +54,7 @@ const handleCreate = async () => {
     form.agentId = ''
     form.secret = ''
     loadApps()
-  } catch (error) {
+  } catch {
     ElMessage.error('应用创建失败')
   } finally {
     isSubmitting.value = false
@@ -72,7 +72,7 @@ const handleDelete = async (app: PortalAppResponse) => {
         cancelButtonText: '取消',
       },
     )
-  } catch (error) {
+  } catch {
     return
   }
 
@@ -80,7 +80,7 @@ const handleDelete = async (app: PortalAppResponse) => {
     await deleteApp(app.id)
     ElMessage.success('应用已删除')
     loadApps()
-  } catch (error) {
+  } catch {
     ElMessage.error('删除失败')
   }
 }
@@ -90,7 +90,7 @@ const handleSync = async (app: PortalAppResponse) => {
     await syncApp(app.id)
     ElMessage.success('应用已同步')
     loadApps()
-  } catch (error) {
+  } catch {
     ElMessage.error('同步失败')
   }
 }

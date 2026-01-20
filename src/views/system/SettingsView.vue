@@ -22,7 +22,7 @@ const loadCorp = async () => {
   try {
     const response = await fetchCorp()
     corpForm.corpId = response.corpId ?? ''
-  } catch (error) {
+  } catch {
     ElMessage.error('获取企业配置失败')
   } finally {
     isLoading.value = false
@@ -39,7 +39,7 @@ const handleSaveCorp = async () => {
   try {
     await updateCorp(corpId)
     ElMessage.success('企业配置已更新')
-  } catch (error) {
+  } catch {
     ElMessage.error('企业配置更新失败')
   } finally {
     isSavingCorp.value = false
@@ -60,7 +60,7 @@ const handleUpdatePassword = async () => {
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     ElMessage.success('密码已更新')
-  } catch (error) {
+  } catch {
     ElMessage.error('密码更新失败')
   } finally {
     isSavingPassword.value = false
