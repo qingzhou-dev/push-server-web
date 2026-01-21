@@ -299,18 +299,6 @@ onBeforeUnmount(() => {
           </el-tab-pane>
         </el-tabs>
       </div>
-
-      <div class="panel-footer">
-        <span>还没有账号?</span>
-        <a class="text-link" href="#">联系管理员开通</a>
-      </div>
-      <div class="panel-links">
-        <a href="#">隐私政策</a>
-        <span class="divider"></span>
-        <a href="#">服务条款</a>
-        <span class="divider"></span>
-        <a href="#">帮助中心</a>
-      </div>
     </section>
   </div>
 </template>
