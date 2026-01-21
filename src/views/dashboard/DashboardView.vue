@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
 import {
   Clock,
   Histogram,
@@ -91,63 +92,128 @@ const kpiCards = computed(() => [
   },
 ])
 
-const trendPoints = computed(() => {
+const chartRef = ref<HTMLElement | null>(null)
+let chartInstance: echarts.ECharts | null = null
+
+const initChart = () => {
+  if (!chartRef.value) return
   const data = charts.value?.trend || []
-  const max = Math.max(...data.map((d) => d.count), 1)
-  const step = data.length > 1 ? 100 / (data.length - 1) : 0
-  return data.map((item, index) => ({
-    x: step * index,
-    y: 40 - (item.count / max) * 30 - 4,
-    label: item.date,
-    value: item.count,
-  }))
-})
-
-const getControlPoint = (
-  current: { x: number; y: number },
-  previous: { x: number; y: number },
-  next: { x: number; y: number },
-  reverse?: boolean,
-) => {
-  const p = previous || current
-  const n = next || current
-  const smoothing = 0.2
-  const o = { x: n.x - p.x, y: n.y - p.y }
-  const angle = Math.atan2(o.y, o.x) + (reverse ? Math.PI : 0)
-  const length = Math.sqrt(o.x ** 2 + o.y ** 2) * smoothing
-  const x = current.x + Math.cos(angle) * length
-  const y = current.y + Math.sin(angle) * length
-  return { x, y }
-}
-
-const getSmoothPath = (points: { x: number; y: number }[]) => {
-  if (points.length <= 1) return ''
-  let d = `M ${points[0].x} ${points[0].y}`
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1]
-    const p1 = points[i]
-    const p2 = points[i + 1]
-    const p3 = points[i + 2]
-    const cp1 = getControlPoint(p1, p0, p2)
-    const cp2 = getControlPoint(p2, p1, p3, true)
-    d += ` C ${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${p2.x} ${p2.y}`
+  // Even if empty, we might want to show an empty chart or grid
+  
+  if (!chartInstance) {
+    chartInstance = echarts.init(chartRef.value)
   }
-  return d
+
+  const dates = data.map((d) => d.date)
+  const counts = data.map((d) => d.count)
+
+  const option = {
+    grid: {
+      top: 15,
+      right: 15,
+      bottom: 5,
+      left: 15,
+      containLabel: true,
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e2e8f0',
+      textStyle: {
+        color: '#1e293b',
+        fontSize: 12,
+      },
+      axisPointer: {
+        type: 'line',
+        lineStyle: {
+          color: '#3b82f6',
+          width: 1,
+          type: 'dashed',
+        },
+      },
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: '#64748b',
+        fontSize: 11,
+        interval: 'auto',
+      },
+      boundaryGap: false,
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        lineStyle: {
+          type: 'dashed',
+          color: '#f1f5f9',
+        },
+      },
+      axisLabel: {
+        color: '#64748b',
+        fontSize: 11,
+      },
+    },
+    series: [
+      {
+        name: '发送量',
+        data: counts,
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        showSymbol: false,
+        itemStyle: {
+          color: '#3b82f6',
+          borderWidth: 2,
+          borderColor: '#fff',
+        },
+        lineStyle: {
+          width: 3,
+          color: '#3b82f6',
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            {
+              offset: 0,
+              color: 'rgba(59, 130, 246, 0.2)',
+            },
+            {
+              offset: 1,
+              color: 'rgba(59, 130, 246, 0)',
+            },
+          ]),
+        },
+      },
+    ],
+  }
+
+  chartInstance.setOption(option)
 }
 
-const trendPath = computed(() => {
-  if (!trendPoints.value.length) return ''
-  return getSmoothPath(trendPoints.value)
+const handleResize = () => {
+  chartInstance?.resize()
+}
+
+watch(
+  () => charts.value?.trend,
+  () => {
+    // Small delay to ensure DOM is ready if needed, or just call directly
+    setTimeout(() => {
+      initChart()
+    }, 100)
+  },
+  { deep: true },
+)
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
 })
 
-const trendAreaPath = computed(() => {
-  const path = trendPath.value
-  if (!path || !trendPoints.value.length) return ''
-  const points = trendPoints.value
-  const last = points[points.length - 1]
-  const first = points[0]
-  return `${path} L ${last.x} 42 L ${first.x} 42 Z`
-})
 
 const distributionTotal = computed(
   () =>
@@ -220,6 +286,7 @@ const refreshAll = () => {
 
 onMounted(() => {
   refreshAll()
+  window.addEventListener('resize', handleResize)
 })
 </script>
 
@@ -301,47 +368,9 @@ onMounted(() => {
             </div>
           </template>
 
-          <div v-if="trendPoints.length" class="chart-shell">
-            <svg viewBox="0 0 100 44" preserveAspectRatio="none" class="trend-chart">
-              <defs>
-                <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.2" />
-                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <path :d="trendAreaPath" fill="url(#trendFill)" />
-              <path
-                :d="trendPath"
-                stroke="#2563eb"
-                stroke-width="3"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <g v-for="(p, idx) in trendPoints" :key="idx">
-                <circle
-                  :cx="p.x"
-                  :cy="p.y"
-                  r="3"
-                  fill="#fff"
-                  stroke="#2563eb"
-                  stroke-width="2"
-                />
-                <text
-                  v-if="idx === trendPoints.length - 1"
-                  :x="p.x + 1.5"
-                  :y="p.y - 2.5"
-                  class="chart-label"
-                >
-                  {{ p.value }}
-                </text>
-              </g>
-            </svg>
-            <div class="trend-axis">
-              <span v-for="p in trendPoints" :key="p.label">{{ p.label }}</span>
-            </div>
+          <div class="chart-shell">
+            <div ref="chartRef" class="echarts-container" />
           </div>
-          <el-empty v-else description="暂无趋势数据" />
         </el-card>
       </el-col>
 
@@ -551,26 +580,12 @@ onMounted(() => {
 
 .chart-shell {
   position: relative;
+  margin-top: 12px;
 }
 
-.trend-chart {
+.echarts-container {
   width: 100%;
-  height: 240px;
-}
-
-.chart-label {
-  font-size: 4px;
-  fill: #2563eb;
-  font-weight: 600;
-}
-
-.trend-axis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-  color: var(--app-muted);
-  font-size: 12px;
+  height: 380px;
 }
 
 .distribution {

@@ -38,6 +38,11 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   (error: AxiosError<{ message?: string }>) => {
+    if (error.response?.status === 401) {
+      window.location.reload()
+      return Promise.reject(error)
+    }
+
     const message =
       error.response?.data?.message ?? error.message ?? 'Service response failed'
     ElMessage.error(message)

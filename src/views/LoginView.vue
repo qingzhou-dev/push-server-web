@@ -25,6 +25,7 @@ const captchaImage = ref('')
 const turnstileEnabled = ref(false)
 const turnstileSiteKey = ref('')
 const turnstileToken = ref('')
+const turnstileWidgetRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 const codeCaptchaVisible = ref(true) // Controls visibility of legacy image captcha
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 const normalizedApiBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase
@@ -43,6 +44,7 @@ const refreshCaptcha = async () => {
   if (turnstileEnabled.value) {
     turnstileToken.value = ''
     captcha.value = '' // Clear internal captcha value
+    turnstileWidgetRef.value?.reset()
     return
   }
   
@@ -253,6 +255,7 @@ onBeforeUnmount(() => {
                 <div class="form-field" v-if="turnstileEnabled">
                   <label>安全验证</label>
                   <TurnstileWidget
+                    ref="turnstileWidgetRef"
                     :site-key="turnstileSiteKey"
                     @verify="handleTurnstileVerify"
                     @expire="turnstileToken = ''; captcha = ''"
