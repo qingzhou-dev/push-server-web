@@ -83,6 +83,14 @@ export const adminRoutes: RouteRecordRaw = {
 
 export const routes: RouteRecordRaw[] = [
   {
+    path: '/init',
+    name: 'Init',
+    component: () => import('@/views/InitView.vue'),
+    meta: {
+      title: '系统初始化',
+    },
+  },
+  {
     path: '/login',
     name: 'Login',
     component: LoginView,

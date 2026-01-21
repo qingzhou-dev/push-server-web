@@ -19,3 +19,12 @@ export const login = (payload: LoginPayload) => {
 export const fetchCaptcha = () => {
   return http.get<Blob>('/captcha', { responseType: 'blob' })
 }
+
+export interface CaptchaConfig {
+  enabled: boolean
+  siteKey: string
+}
+
+export const getCaptchaConfig = () => {
+  return http.get<CaptchaConfig>('/captcha')
+}

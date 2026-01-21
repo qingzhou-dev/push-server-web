@@ -11,7 +11,8 @@ import { ElMessage } from 'element-plus'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { fetchCaptcha, login } from '@/api/login'
+import { type CaptchaConfig, fetchCaptcha, getCaptchaConfig, login } from '@/api/login'
+import TurnstileWidget from '@/components/TurnstileWidget.vue'
 
 const router = useRouter()
 const activeTab = ref('account')
@@ -21,6 +22,10 @@ const captcha = ref('')
 const autoLogin = ref(false)
 const isSubmitting = ref(false)
 const captchaImage = ref('')
+const turnstileEnabled = ref(false)
+const turnstileSiteKey = ref('')
+const turnstileToken = ref('')
+const codeCaptchaVisible = ref(true) // Controls visibility of legacy image captcha
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 const normalizedApiBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase
 let captchaObjectUrl: string | null = null
@@ -34,20 +39,69 @@ const setCaptchaImage = (blob: Blob) => {
 }
 
 const refreshCaptcha = async () => {
+  // If Turnstile is enabled, we don't need image captcha (or we reset the widget)
+  if (turnstileEnabled.value) {
+    turnstileToken.value = ''
+    captcha.value = '' // Clear internal captcha value
+    return
+  }
+  
   captcha.value = ''
   try {
     const blob = await fetchCaptcha()
+    // If the response is actually JSON (config) instead of blob, it might mean image captcha is disabled
+    if (blob.type === 'application/json') {
+       codeCaptchaVisible.value = false
+       return
+    }
     setCaptchaImage(blob)
+    codeCaptchaVisible.value = true
   } catch {
+    // Fallback or error handling
     captchaImage.value = `${normalizedApiBase}/captcha?t=${Date.now()}`
   }
+}
+
+const loadCaptchaConfig = async () => {
+  try {
+    const res = await getCaptchaConfig()
+    // Check if the response matches the config structure
+    if (res && typeof res.enabled === 'boolean') {
+      turnstileEnabled.value = res.enabled
+      turnstileSiteKey.value = res.siteKey
+      
+      if (res.enabled) {
+        codeCaptchaVisible.value = false
+      } else {
+        // Fallback to legacy check
+        refreshCaptcha()
+      }
+    } else {
+       // Unexpected response, try legacy
+       refreshCaptcha()
+    }
+  } catch (e) {
+    // API might not exist or network error, fallback to legacy
+    refreshCaptcha()
+  }
+}
+
+const handleTurnstileVerify = (token: string) => {
+  turnstileToken.value = token
+  captcha.value = token // Bind to the same model used for submission
 }
 
 const handleLogin = async () => {
   const trimmedAccount = account.value.trim()
   const trimmedCaptcha = captcha.value.trim()
-  if (!trimmedAccount || !password.value || !trimmedCaptcha) {
-    ElMessage.warning('请输入账号、密码和验证码')
+  
+  if (!trimmedAccount || !password.value) {
+     ElMessage.warning('请输入账号和密码')
+     return
+  }
+  
+  if ((turnstileEnabled.value || codeCaptchaVisible.value) && !trimmedCaptcha) {
+    ElMessage.warning(turnstileEnabled.value ? '请完成验证' : '请输入验证码')
     return
   }
 
@@ -74,7 +128,7 @@ const handleLogin = async () => {
 }
 
 onMounted(() => {
-  refreshCaptcha()
+  loadCaptchaConfig()
 })
 
 onBeforeUnmount(() => {
@@ -196,35 +250,44 @@ onBeforeUnmount(() => {
                 </el-input>
               </div>
 
-              <div class="form-field">
-                <label>验证码</label>
-                <div class="captcha-row">
-                  <el-input
-                    v-model="captcha"
-                    placeholder="输入右侧验证码"
-                    @keyup.enter="handleLogin"
-                  >
-                    <template #prefix>
-                      <el-icon>
-                        <Key />
-                      </el-icon>
-                    </template>
-                  </el-input>
-                  <button
-                    class="captcha-box"
-                    type="button"
-                    aria-label="点击更换验证码"
-                    @click="refreshCaptcha"
-                  >
-                    <img class="captcha-image" :src="captchaImage" alt="验证码图片" />
-                  </button>
-                  <button class="captcha-refresh" type="button" @click="refreshCaptcha">
-                    <el-icon>
-                      <RefreshRight />
-                    </el-icon>
-                  </button>
+                <div class="form-field" v-if="turnstileEnabled">
+                  <label>安全验证</label>
+                  <TurnstileWidget
+                    :site-key="turnstileSiteKey"
+                    @verify="handleTurnstileVerify"
+                    @expire="turnstileToken = ''; captcha = ''"
+                  />
                 </div>
-              </div>
+
+                <div class="form-field" v-else-if="codeCaptchaVisible">
+                  <label>验证码</label>
+                  <div class="captcha-row">
+                    <el-input
+                      v-model="captcha"
+                      placeholder="输入右侧验证码"
+                      @keyup.enter="handleLogin"
+                    >
+                      <template #prefix>
+                        <el-icon>
+                          <Key />
+                        </el-icon>
+                      </template>
+                    </el-input>
+                    <button
+                      class="captcha-box"
+                      type="button"
+                      aria-label="点击更换验证码"
+                      @click="refreshCaptcha"
+                    >
+                      <img class="captcha-image" :src="captchaImage" alt="验证码图片" />
+                    </button>
+                    <button class="captcha-refresh" type="button" @click="refreshCaptcha">
+                      <el-icon>
+                        <RefreshRight />
+                      </el-icon>
+                    </button>
+                  </div>
+                </div>
 
               <div class="form-meta">
                 <el-checkbox v-model="autoLogin">自动登录</el-checkbox>
