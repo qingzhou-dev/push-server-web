@@ -199,19 +199,6 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="login-card">
-        <div class="qr-corner">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="3" width="6" height="6" rx="1"></rect>
-            <rect x="15" y="3" width="6" height="6" rx="1"></rect>
-            <rect x="3" y="15" width="6" height="6" rx="1"></rect>
-            <rect x="15" y="15" width="2" height="2"></rect>
-            <rect x="19" y="15" width="2" height="2"></rect>
-            <rect x="15" y="19" width="2" height="2"></rect>
-            <rect x="19" y="19" width="2" height="2"></rect>
-          </svg>
-          <span class="qr-tip">扫码快捷登录</span>
-        </div>
-
         <div class="card-header">
           <h2>管理后台登录</h2>
           <p>请选择登录方式进入企业微信管理系统</p>
@@ -294,7 +281,6 @@ onBeforeUnmount(() => {
 
               <div class="form-meta">
                 <el-checkbox v-model="autoLogin">自动登录</el-checkbox>
-                <a class="text-link" href="#">忘记密码?</a>
               </div>
 
               <el-button
@@ -309,16 +295,6 @@ onBeforeUnmount(() => {
                   <ArrowRight />
                 </el-icon>
               </el-button>
-            </div>
-          </el-tab-pane>
-
-          <el-tab-pane label="扫码登录" name="qr">
-            <div class="qr-panel">
-              <div class="qr-code">
-                <div class="qr-grid"></div>
-              </div>
-              <p>打开企业微信扫一扫</p>
-              <p class="qr-tip-text">支持管理员扫码快速登录</p>
             </div>
           </el-tab-pane>
         </el-tabs>
