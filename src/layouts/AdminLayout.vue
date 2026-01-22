@@ -36,7 +36,7 @@ const toggleSidebar = () => {
       :width="appStore.sidebarCollapsed ? '76px' : '240px'"
     >
       <div class="app-logo">
-        <span class="logo-mark">PS</span>
+        <img src="/logo.png" alt="Logo" class="logo-image" />
         <span v-if="!appStore.sidebarCollapsed" class="logo-text">
           Push Server
         </span>

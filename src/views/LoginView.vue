@@ -145,9 +145,7 @@ onBeforeUnmount(() => {
     <section class="login-hero">
       <div class="hero-brand">
         <span class="brand-icon">
-          <el-icon>
-            <OfficeBuilding />
-          </el-icon>
+          <img src="/logo.png" alt="Logo" class="brand-logo-img" />
         </span>
         <span class="brand-text">轻舟消息推送平台</span>
       </div>
@@ -192,9 +190,7 @@ onBeforeUnmount(() => {
 
     <section class="login-panel">
       <div class="mobile-brand">
-        <el-icon>
-          <OfficeBuilding />
-        </el-icon>
+        <img src="/logo.png" alt="Logo" class="mobile-logo-img" />
         <span>轻舟消息推送平台</span>
       </div>
 
@@ -357,6 +353,20 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.brand-logo-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.mobile-logo-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .brand-text {

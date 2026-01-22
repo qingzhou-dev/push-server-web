@@ -66,9 +66,7 @@ const handleInit = async () => {
     <section class="init-hero">
       <div class="hero-brand">
         <span class="brand-icon">
-          <el-icon>
-            <OfficeBuilding />
-          </el-icon>
+          <img src="/logo.png" alt="Logo" class="brand-logo-img" />
         </span>
         <span class="brand-text">WeCom Enterprise</span>
       </div>
@@ -146,6 +144,17 @@ const handleInit = async () => {
             <el-switch v-model="turnstileEnabled" />
           </div>
 
+          <div class="security-note">
+            <div class="note-row risk">
+              <span class="note-badge">风险</span>
+              <span class="note-text">未开启验证可能导致登录接口面临暴力破解或恶意攻击风险。</span>
+            </div>
+            <div class="note-row req">
+              <span class="note-badge">配置</span>
+              <span class="note-text">开启验证需前往 Cloudflare 获取 Site Key 和 Secret Key。</span>
+            </div>
+          </div>
+
           <template v-if="turnstileEnabled">
             <div class="form-field">
               <label>Site Key</label>
@@ -217,6 +226,13 @@ const handleInit = async () => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.brand-logo-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .brand-text {
@@ -359,5 +375,48 @@ const handleInit = async () => {
   .hero-content {
     margin-top: 40px;
   }
+}
+
+.security-note {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.note-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.note-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  height: 20px;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
+.note-row.risk .note-badge {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.note-row.req .note-badge {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.note-text {
+  color: #64748b;
 }
 </style>
