@@ -149,7 +149,7 @@ onBeforeUnmount(() => {
             <OfficeBuilding />
           </el-icon>
         </span>
-        <span class="brand-text">WeCom Enterprise</span>
+        <span class="brand-text">轻舟消息推送平台</span>
       </div>
 
       <div class="hero-content">
@@ -158,7 +158,7 @@ onBeforeUnmount(() => {
           <span>协同驱动未来</span>
         </h1>
         <p>
-          为企业打造高效、安全的数字化办公环境。统一管理，无缝协作，赋能每一位员工。
+          轻舟消息推送平台为您提供高效、安全的数字化办公环境。统一管理，无缝协作，赋能每一位员工。
         </p>
         <div class="hero-tags">
           <span class="hero-tag">
@@ -195,13 +195,13 @@ onBeforeUnmount(() => {
         <el-icon>
           <OfficeBuilding />
         </el-icon>
-        <span>WeCom</span>
+        <span>轻舟消息推送平台</span>
       </div>
 
       <div class="login-card">
         <div class="card-header">
-          <h2>管理后台登录</h2>
-          <p>请选择登录方式进入企业微信管理系统</p>
+          <h2>轻舟消息推送平台</h2>
+          <p>请登录以管理消息推送系统</p>
         </div>
 
         <el-tabs v-model="activeTab" class="login-tabs">
