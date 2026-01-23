@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
 import { fetchMe } from '@/api/me'
 import type { PortalUserResponse } from '@/api/types'
 
@@ -19,7 +18,7 @@ const loadProfile = async () => {
   try {
     profile.value = await fetchMe()
   } catch {
-    ElMessage.error('获取账号信息失败')
+    // Error handled by interceptor
   } finally {
     isLoading.value = false
   }

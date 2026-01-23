@@ -1,7 +1,6 @@
 ﻿import type { RouteRecordRaw } from 'vue-router'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import DashboardView from '@/views/dashboard/DashboardView.vue'
 import AppsView from '@/views/apps/AppsView.vue'
 import ApiKeysView from '@/views/apps/ApiKeysView.vue'
 import MessagesView from '@/views/messages/MessagesView.vue'
@@ -16,14 +15,16 @@ export const adminRoutes: RouteRecordRaw = {
   component: AdminLayout,
   redirect: '/login',
   children: [
-    {
-      path: 'dashboard',
-      name: 'Dashboard',
-      component: DashboardView,
-      meta: {
-        title: '运营概览',
+      {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/dashboard/DashboardView.vue'),
+        meta: {
+          title: '控制台',
+          icon: 'DataBoard',
+          affix: true,
+        },
       },
-    },
     {
       path: 'apps',
       name: 'Apps',

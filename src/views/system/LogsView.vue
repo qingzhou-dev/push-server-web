@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
 
 import { fetchApps } from '@/api/apps'
@@ -78,7 +77,7 @@ const loadApps = async () => {
   try {
     apps.value = await fetchApps()
   } catch {
-    ElMessage.error('获取应用列表失败')
+    // Error handled by interceptor
   } finally {
     isAppsLoading.value = false
   }
@@ -100,7 +99,7 @@ const loadLogs = async () => {
     logs.value = result.records
     total.value = result.total
   } catch {
-    ElMessage.error('获取日志失败')
+    // Error handled by interceptor
   } finally {
     isLoading.value = false
   }

@@ -19,7 +19,7 @@ export type NavItem = {
 
 export const navigation: NavItem[] = [
   {
-    title: '运营概览',
+    title: '控制台',
     path: '/dashboard',
     icon: DataAnalysis,
   },

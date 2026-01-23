@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import {
   Clock,
@@ -250,7 +249,7 @@ const loadStats = async () => {
   try {
     stats.value = await fetchDashboardStats()
   } catch {
-    ElMessage.error('获取统计数据失败')
+    // Error handled by interceptor
   } finally {
     loadingStats.value = false
   }
@@ -261,7 +260,7 @@ const loadCharts = async () => {
   try {
     charts.value = await fetchDashboardCharts()
   } catch {
-    ElMessage.error('获取图表数据失败')
+    // Error handled by interceptor
   } finally {
     loadingCharts.value = false
   }
@@ -272,7 +271,7 @@ const loadRecentLogs = async () => {
   try {
     recentLogs.value = await fetchDashboardRecentLogs(recentLimit.value)
   } catch {
-    ElMessage.error('获取最新日志失败')
+    // Error handled by interceptor
   } finally {
     loadingLogs.value = false
   }

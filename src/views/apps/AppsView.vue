@@ -27,7 +27,7 @@ const loadApps = async () => {
   try {
     apps.value = await fetchApps()
   } catch {
-    ElMessage.error('获取应用列表失败')
+    // Error handled by interceptor
   } finally {
     isLoading.value = false
   }
@@ -55,7 +55,7 @@ const handleCreate = async () => {
     form.secret = ''
     loadApps()
   } catch {
-    ElMessage.error('应用创建失败')
+    // Error handled by interceptor
   } finally {
     isSubmitting.value = false
   }
@@ -81,7 +81,7 @@ const handleDelete = async (app: PortalAppResponse) => {
     ElMessage.success('应用已删除')
     loadApps()
   } catch {
-    ElMessage.error('删除失败')
+    // Error handled by interceptor
   }
 }
 
@@ -91,7 +91,7 @@ const handleSync = async (app: PortalAppResponse) => {
     ElMessage.success('应用已同步')
     loadApps()
   } catch {
-    ElMessage.error('同步失败')
+    // Error handled by interceptor
   }
 }
 

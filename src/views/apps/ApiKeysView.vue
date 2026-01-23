@@ -41,7 +41,7 @@ const loadApps = async () => {
       selectedAppId.value = apps.value[0].id
     }
   } catch {
-    ElMessage.error('获取应用列表失败')
+    // Error handled by interceptor
   } finally {
     isLoadingApps.value = false
   }
@@ -71,7 +71,7 @@ const handleGenerate = async () => {
     ElMessage.success('已生成新的 API Key')
     loadApiKey(selectedAppId.value)
   } catch {
-    ElMessage.error('生成密钥失败')
+    // Error handled by interceptor
   } finally {
     isMutating.value = false
   }
@@ -100,7 +100,7 @@ const handleDelete = async () => {
     apiKeyInfo.value = null
     rateLimit.value = null
   } catch {
-    ElMessage.error('删除失败')
+    // Error handled by interceptor
   } finally {
     isMutating.value = false
   }
@@ -116,7 +116,7 @@ const handleUpdateRateLimit = async () => {
     ElMessage.success('已更新限流配置')
     loadApiKey(selectedAppId.value)
   } catch {
-    ElMessage.error('更新限流失败')
+    // Error handled by interceptor
   } finally {
     isMutating.value = false
   }

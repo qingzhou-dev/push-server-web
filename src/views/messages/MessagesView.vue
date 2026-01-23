@@ -106,7 +106,7 @@ const loadApps = async () => {
       sampleAppId.value = apps.value[0].id
     }
   } catch {
-    ElMessage.error('获取应用列表失败')
+    // Error handled by interceptor
   } finally {
     isAppsLoading.value = false
   }
@@ -226,7 +226,7 @@ const handleSend = async () => {
     ElMessage.success('消息已发送')
     resetContentFields()
   } catch {
-    ElMessage.error('消息发送失败')
+    // Error handled by interceptor
   } finally {
     isSending.value = false
   }

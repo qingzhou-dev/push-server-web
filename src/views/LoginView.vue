@@ -3,7 +3,6 @@ import {
   ArrowRight,
   Key,
   Lock,
-  OfficeBuilding,
   RefreshRight,
   User,
 } from '@element-plus/icons-vue'
@@ -11,7 +10,7 @@ import { ElMessage } from 'element-plus'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { type CaptchaConfig, fetchCaptcha, getCaptchaConfig, login } from '@/api/login'
+import { fetchCaptcha, getCaptchaConfig, login } from '@/api/login'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
 
 const router = useRouter()
@@ -82,7 +81,7 @@ const loadCaptchaConfig = async () => {
        // Unexpected response, try legacy
        refreshCaptcha()
     }
-  } catch (e) {
+  } catch {
     // API might not exist or network error, fallback to legacy
     refreshCaptcha()
   }
@@ -122,7 +121,6 @@ const handleLogin = async () => {
       refreshCaptcha()
     }
   } catch {
-    ElMessage.error('登录失败，请稍后重试')
     refreshCaptcha()
   } finally {
     isSubmitting.value = false
