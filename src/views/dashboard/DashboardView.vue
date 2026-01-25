@@ -447,7 +447,7 @@ onMounted(() => {
               <el-option :value="20" label="最近 20 条" />
               <el-option :value="50" label="最近 50 条" />
             </el-select>
-            <el-button size="small" :icon="RefreshRight" @click="loadRecentLogs">
+            <el-button size="small" :icon="RefreshRight" :loading="loadingLogs" @click="loadRecentLogs">
               刷新
             </el-button>
           </div>

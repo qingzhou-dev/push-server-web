@@ -9,6 +9,7 @@ const apps = ref<PortalAppResponse[]>([])
 const isLoading = ref(false)
 const dialogVisible = ref(false)
 const isSubmitting = ref(false)
+const syncingAppId = ref<number | null>(null)
 
 const form = reactive({
   agentId: '',
@@ -86,12 +87,15 @@ const handleDelete = async (app: PortalAppResponse) => {
 }
 
 const handleSync = async (app: PortalAppResponse) => {
+  syncingAppId.value = app.id
   try {
     await syncApp(app.id)
     ElMessage.success('应用已同步')
     loadApps()
   } catch {
     // Error handled by interceptor
+  } finally {
+    syncingAppId.value = null
   }
 }
 
@@ -108,7 +112,7 @@ onMounted(() => {
         <p>接入企业微信应用并同步基础信息</p>
       </div>
       <div class="page-actions">
-        <el-button :icon="RefreshRight" @click="loadApps">刷新</el-button>
+        <el-button :icon="RefreshRight" :loading="isLoading" @click="loadApps">刷新</el-button>
         <el-button type="primary" :icon="Plus" @click="openDialog">
           新增应用
         </el-button>
@@ -142,7 +146,12 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="操作" min-width="160">
           <template #default="scope">
-            <el-button size="small" text @click="handleSync(scope.row)">
+            <el-button
+              size="small"
+              text
+              :loading="syncingAppId === scope.row.id"
+              @click="handleSync(scope.row)"
+            >
               同步
             </el-button>
             <el-button

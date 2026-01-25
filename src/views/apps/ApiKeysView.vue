@@ -153,7 +153,7 @@ watch(selectedAppId, (appId) => {
         <p>为每个应用管理开放接口的 API Key，支持生成/重置、限流和删除。</p>
       </div>
       <div class="page-actions">
-        <el-button :icon="RefreshRight" @click="loadApps">刷新列表</el-button>
+        <el-button :icon="RefreshRight" :loading="isLoadingApps" @click="loadApps">刷新列表</el-button>
       </div>
     </div>
 
