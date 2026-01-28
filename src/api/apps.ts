@@ -11,6 +11,12 @@ export interface CreateAppPayload {
   secret: string
 }
 
+export interface UpdateAppPayload {
+  secret?: string
+  token?: string
+  encodingAesKey?: string
+}
+
 export interface UpdateAppApiKeyPayload {
   rateLimitPerMinute: number | null
 }
@@ -24,6 +30,15 @@ export const createApp = async (payload: CreateAppPayload) => {
   await ensureCsrfToken()
   const response = await http.post<PortalResponse<PortalAppResponse>>(
     '/v2/apps',
+    payload,
+  )
+  return unwrapPortalResponse(response)
+}
+
+export const updateApp = async (appId: number, payload: UpdateAppPayload) => {
+  await ensureCsrfToken()
+  const response = await http.put<PortalResponse<PortalAppResponse>>(
+    `/v2/apps/${appId}`,
     payload,
   )
   return unwrapPortalResponse(response)

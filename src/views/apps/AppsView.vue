@@ -1,19 +1,28 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, RefreshRight } from '@element-plus/icons-vue'
-import { createApp, deleteApp, fetchApps, syncApp } from '@/api/apps'
+import { CopyDocument, Plus, RefreshRight, Setting } from '@element-plus/icons-vue'
+import { createApp, deleteApp, fetchApps, syncApp, updateApp } from '@/api/apps'
 import type { PortalAppResponse } from '@/api/types'
 
 const apps = ref<PortalAppResponse[]>([])
 const isLoading = ref(false)
 const dialogVisible = ref(false)
+const editDialogVisible = ref(false)
 const isSubmitting = ref(false)
 const syncingAppId = ref<number | null>(null)
 
 const form = reactive({
   agentId: '',
   secret: '',
+})
+
+const editForm = reactive({
+  id: 0,
+  agentId: '',
+  secret: '',
+  token: '',
+  encodingAesKey: '',
 })
 
 const formatDate = (value?: number) => {
@@ -38,6 +47,28 @@ const openDialog = () => {
   dialogVisible.value = true
 }
 
+const openEditDialog = (app: PortalAppResponse) => {
+  editForm.id = app.id
+  editForm.agentId = app.agentId
+  editForm.secret = '' // Reset secret, only update if provided
+  editForm.token = '' // These are not in the response usually, or we don't know
+  editForm.encodingAesKey = ''
+  editDialogVisible.value = true
+}
+
+const getCallbackUrl = (id: number) => {
+  return `${window.location.origin}/api/v2/wecom/callback/${id}`
+}
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制到剪贴板')
+  } catch {
+    ElMessage.error('复制失败，请手动选择复制')
+  }
+}
+
 const handleCreate = async () => {
   const agentId = form.agentId.trim()
   if (!agentId || !form.secret) {
@@ -54,6 +85,27 @@ const handleCreate = async () => {
     dialogVisible.value = false
     form.agentId = ''
     form.secret = ''
+    loadApps()
+  } catch {
+    // Error handled by interceptor
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const handleUpdate = async () => {
+  isSubmitting.value = true
+  try {
+    const payload: any = {
+      token: editForm.token,
+      encodingAesKey: editForm.encodingAesKey,
+    }
+    if (editForm.secret) {
+      payload.secret = editForm.secret
+    }
+    await updateApp(editForm.id, payload)
+    ElMessage.success('配置已更新')
+    editDialogVisible.value = false
     loadApps()
   } catch {
     // Error handled by interceptor
@@ -149,6 +201,14 @@ onMounted(() => {
             <el-button
               size="small"
               text
+              :icon="Setting"
+              @click="openEditDialog(scope.row)"
+            >
+              配置
+            </el-button>
+            <el-button
+              size="small"
+              text
               :loading="syncingAppId === scope.row.id"
               @click="handleSync(scope.row)"
             >
@@ -184,5 +244,114 @@ onMounted(() => {
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="editDialogVisible" title="应用配置" width="560px">
+      <el-form :model="editForm" label-width="120px">
+        <el-form-item label="AgentId">
+          <el-input v-model="editForm.agentId" disabled />
+        </el-form-item>
+        <el-form-item label="Secret">
+          <el-input v-model="editForm.secret" placeholder="不更新请留空" show-password />
+        </el-form-item>
+        <el-divider content-position="left">接收消息配置</el-divider>
+        <el-form-item label="Token">
+          <el-input v-model="editForm.token" placeholder="企业微信后台生成的 Token" />
+        </el-form-item>
+        <el-form-item label="EncodingAESKey">
+          <el-input v-model="editForm.encodingAesKey" placeholder="企业微信后台生成的 EncodingAESKey" />
+        </el-form-item>
+        <el-form-item label="回调 URL">
+          <div class="callback-url-container">
+            <el-input :value="getCallbackUrl(editForm.id)" readonly>
+              <template #append>
+                <el-button :icon="CopyDocument" @click="copyToClipboard(getCallbackUrl(editForm.id))" />
+              </template>
+            </el-input>
+          </div>
+        </el-form-item>
+
+        <el-collapse class="guide-collapse">
+          <el-collapse-item title="配置指引" name="1">
+            <div class="guide-content">
+              <ol>
+                <li>登录 <a href="https://work.weixin.qq.com/" target="_blank">企业微信管理后台</a>。</li>
+                <li>进入 <strong>应用管理</strong> -> 选择对应的应用。</li>
+                <li>找到 <strong>接收消息</strong> -> 点击 <strong>设置 API 接收</strong>。</li>
+                <li>在配置页面：
+                  <ul>
+                    <li><strong>URL</strong>: 复制上方本系统提供的 <strong>回调 URL</strong>。</li>
+                    <li><strong>Token</strong>: 点击“随机获取”，并同步填写到本页面的 <strong>Token</strong> 输入框中。</li>
+                    <li><strong>EncodingAESKey</strong>: 点击“随机获取”，并同步填写到本页面的 <strong>EncodingAESKey</strong> 输入框中。</li>
+                  </ul>
+                </li>
+                <li><strong>重要顺序</strong>: 先在本页面点击 <strong>保存配置</strong>，然后再在企业微信后台点击 <strong>保存</strong> 进行验证。</li>
+              </ol>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="isSubmitting" @click="handleUpdate">
+          保存配置
+        </el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
+
+<style scoped>
+.app-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-name {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.app-meta {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.callback-url-container {
+  width: 100%;
+}
+
+.guide-collapse {
+  margin-top: 20px;
+  border: none;
+}
+
+:deep(.guide-collapse .el-collapse-item__header) {
+  font-size: 13px;
+  color: var(--el-color-primary);
+  background: transparent;
+  border: none;
+}
+
+:deep(.guide-collapse .el-collapse-item__wrap) {
+  background: transparent;
+  border: none;
+}
+
+.guide-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+}
+
+.guide-content ol {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.guide-content ul {
+  padding-left: 18px;
+  margin: 4px 0;
+  list-style-type: circle;
+}
+</style>

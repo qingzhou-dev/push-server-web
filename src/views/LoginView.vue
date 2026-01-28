@@ -18,7 +18,7 @@ const activeTab = ref('account')
 const account = ref('')
 const password = ref('')
 const captcha = ref('')
-const autoLogin = ref(false)
+const rememberPassword = ref(false)
 const isSubmitting = ref(false)
 const captchaImage = ref('')
 const turnstileEnabled = ref(false)
@@ -115,6 +115,15 @@ const handleLogin = async () => {
     })
     if (response.code === 200) {
       ElMessage.success(response.msg || '登录成功')
+      if (rememberPassword.value) {
+        localStorage.setItem('saved_account', trimmedAccount)
+        localStorage.setItem('saved_password', window.btoa(password.value))
+        localStorage.setItem('remember_password', 'true')
+      } else {
+        localStorage.removeItem('saved_account')
+        localStorage.removeItem('saved_password')
+        localStorage.removeItem('remember_password')
+      }
       router.replace('/dashboard')
     } else {
       ElMessage.error(response.msg || '登录失败')
@@ -129,6 +138,22 @@ const handleLogin = async () => {
 
 onMounted(() => {
   loadCaptchaConfig()
+  const shouldRemember = localStorage.getItem('remember_password') === 'true'
+  if (shouldRemember) {
+    const savedAccount = localStorage.getItem('saved_account')
+    const savedPassword = localStorage.getItem('saved_password')
+    if (savedAccount) {
+      account.value = savedAccount
+      rememberPassword.value = true
+    }
+    if (savedPassword) {
+      try {
+        password.value = window.atob(savedPassword)
+      } catch (e) {
+        console.error('Failed to decode password', e)
+      }
+    }
+  }
 })
 
 onBeforeUnmount(() => {
@@ -274,7 +299,7 @@ onBeforeUnmount(() => {
                 </div>
 
               <div class="form-meta">
-                <el-checkbox v-model="autoLogin">自动登录</el-checkbox>
+                <el-checkbox v-model="rememberPassword">记住密码</el-checkbox>
               </div>
 
               <el-button
