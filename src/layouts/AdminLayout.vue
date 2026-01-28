@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, h } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { Expand, Fold } from '@element-plus/icons-vue'
+import { ElNotification, ElButton } from 'element-plus'
 
 import { navigation } from '@/config/navigation'
 import { useAppStore } from '@/stores/app'
+import { getCurrentVersion, getIgnoredVersion, ignoreVersion } from '@/api/system'
+import { compareVersions } from '@/utils/version'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -27,6 +30,65 @@ const breadcrumbs = computed(() => {
 const toggleSidebar = () => {
   appStore.toggleSidebar()
 }
+
+const checkVersion = async () => {
+  try {
+    // 1. 从 GitHub 获取最新版本
+    const githubRes = await fetch('https://api.github.com/repos/qingzhou-dev/push-server/releases/latest')
+    if (!githubRes.ok) return
+    const githubData = await githubRes.json()
+    const latestVersion = githubData.tag_name
+
+    // 2. 从后端获取当前版本
+    const currentRes = await getCurrentVersion()
+    const currentVersion = currentRes.data.version
+
+    // 3. 从后端获取已忽略的版本
+    const ignoreRes = await getIgnoredVersion()
+    const ignoredVersion = ignoreRes.data.version
+
+    // 4. 比对版本
+    // 如果 最新版本 > 当前版本 且 最新版本 != 已忽略版本
+    if (compareVersions(latestVersion, currentVersion) > 0 && latestVersion !== ignoredVersion) {
+      const notification = ElNotification({
+        title: '发现新版本',
+        message: h('div', [
+          h('p', { style: 'margin-bottom: 8px' }, `检测到新后端版本 ${latestVersion} (当前: ${currentVersion})`),
+          h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end' }, [
+            h(ElButton, {
+              size: 'small',
+              onClick: async () => {
+                try {
+                  await ignoreVersion(latestVersion)
+                  notification.close()
+                } catch (e) {
+                  console.error('Failed to ignore version', e)
+                }
+              }
+            }, () => '忽略此版本'),
+            h(ElButton, {
+              type: 'primary',
+              size: 'small',
+              onClick: () => {
+                window.open(githubData.html_url, '_blank')
+                notification.close()
+              }
+            }, () => '前往更新')
+          ])
+        ]),
+        type: 'info',
+        duration: 0, // 手动关闭
+        position: 'bottom-right',
+      })
+    }
+  } catch (e) {
+    console.error('Version check failed:', e)
+  }
+}
+
+onMounted(() => {
+  checkVersion()
+})
 </script>
 
 <template>
