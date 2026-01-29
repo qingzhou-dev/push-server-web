@@ -8,6 +8,7 @@ import {
   Setting,
   Tools,
   UserFilled,
+  Operation,
 } from '@element-plus/icons-vue'
 
 export type NavItem = {
@@ -57,6 +58,11 @@ export const navigation: NavItem[] = [
         title: '企业配置',
         path: '/system/settings',
         icon: Tools,
+      },
+      {
+        title: '代理配置',
+        path: '/system/proxy',
+        icon: Operation,
       },
     ],
   },

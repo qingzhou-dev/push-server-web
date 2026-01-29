@@ -79,6 +79,15 @@ export const adminRoutes: RouteRecordRaw = {
         group: '系统管理',
       },
     },
+    {
+      path: 'system/proxy',
+      name: 'Proxy',
+      component: () => import('@/views/system/ProxyView.vue'),
+      meta: {
+        title: '代理配置',
+        group: '系统管理',
+      },
+    },
   ],
 }
 
