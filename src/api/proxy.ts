@@ -6,7 +6,7 @@ export interface ProxyConfig {
   port: number
   username?: string
   password?: string
-  type: 'HTTP'
+  type: 'HTTP' | 'SOCKS5'
   exitIp?: string
   active: boolean
   createdAt?: number

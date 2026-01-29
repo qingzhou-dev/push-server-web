@@ -110,7 +110,7 @@ onMounted(() => {
     <div class="page-heading">
       <div>
         <h1>代理配置</h1>
-        <p>配置系统对外的 HTTP 代理服务</p>
+        <p>配置系统对外的 HTTP / SOCKS5 代理服务</p>
       </div>
     </div>
 
@@ -139,9 +139,9 @@ onMounted(() => {
             class="stack-form"
           >
             <el-form-item label="代理类型" prop="type">
-              <el-radio-group v-model="form.type" disabled>
+              <el-radio-group v-model="form.type">
                 <el-radio label="HTTP" value="HTTP">HTTP</el-radio>
-                <!-- Future support for SOCKS5 etc -->
+                <el-radio label="SOCKS5" value="SOCKS5">SOCKS5</el-radio>
               </el-radio-group>
             </el-form-item>
 
