@@ -49,7 +49,8 @@ const loadConfig = async () => {
       form.exitIp = ''
       form.active = false
     }
-  } catch {
+  } catch (e) {
+    console.error('Failed to load config:', e)
     // Error handled by interceptor or api wrapper
   } finally {
     isLoading.value = false

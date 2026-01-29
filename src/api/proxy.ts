@@ -20,25 +20,25 @@ export interface ProxyResponse<T> {
 }
 
 export const fetchProxyConfig = async () => {
-  const response = await http.get<ProxyResponse<ProxyConfig | null>>('/v2/proxy')
-  if (response.code !== 200) {
-     throw new Error(response.message || 'Failed to fetch proxy config')
+  const response = await http.get<any>('/v2/proxy')
+  if (response.code === 200 || response.success === true) {
+    return response.data
   }
-  return response.data
+  throw new Error(response.message || 'Failed to fetch proxy config')
 }
 
 export const saveProxyConfig = async (config: Omit<ProxyConfig, 'id' | 'createdAt' | 'updatedAt'>) => {
-  const response = await http.put<ProxyResponse<ProxyConfig>>('/v2/proxy', config)
-  if (response.code !== 200) {
-      throw new Error(response.message || 'Failed to save proxy config')
+  const response = await http.put<any>('/v2/proxy', config)
+  if (response.code === 200 || response.success === true) {
+    return response.data
   }
-  return response.data
+  throw new Error(response.message || 'Failed to save proxy config')
 }
 
 export const deleteProxyConfig = async () => {
-  const response = await http.delete<ProxyResponse<null>>('/v2/proxy')
-  if (response.code !== 200) {
-      throw new Error(response.message || 'Failed to delete proxy config')
+  const response = await http.delete<any>('/v2/proxy')
+  if (response.code === 200 || response.success === true) {
+    return response.data
   }
-  return response.data
+  throw new Error(response.message || 'Failed to delete proxy config')
 }
