@@ -9,6 +9,7 @@ import {
   Tools,
   UserFilled,
   Operation,
+  Box,
 } from '@element-plus/icons-vue'
 
 export type NavItem = {
@@ -33,6 +34,11 @@ export const navigation: NavItem[] = [
     title: 'API 密钥',
     path: '/apps/keys',
     icon: Key,
+  },
+  {
+    title: '插件管理',
+    path: '/plugins',
+    icon: Box,
   },
   {
     title: '消息中心',

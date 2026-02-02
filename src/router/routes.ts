@@ -44,6 +44,15 @@ export const adminRoutes: RouteRecordRaw = {
       },
     },
     {
+      path: 'plugins',
+      name: 'Plugins',
+      component: () => import('@/views/plugins/PluginsView.vue'),
+      meta: {
+        title: '插件管理',
+        group: '业务管理',
+      },
+    },
+    {
       path: 'messages',
       name: 'Messages',
       component: MessagesView,

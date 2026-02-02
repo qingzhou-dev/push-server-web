@@ -24,6 +24,17 @@ export interface PortalAppApiKeyResponse {
   updatedAt?: number | null
 }
 
+export interface PortalPluginResponse {
+  id: number
+  pluginKey: string
+  name: string
+  description?: string
+  status: number
+  createdAt: number
+  isConnected: boolean
+  isBuiltin: boolean
+}
+
 export interface PortalMessageArticle {
   title: string
   url: string
