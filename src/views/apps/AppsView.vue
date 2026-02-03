@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { CopyDocument, Plus, RefreshRight, Setting } from '@element-plus/icons-vue'
+import { CopyDocument, Connection, Plus, RefreshRight, Setting } from '@element-plus/icons-vue'
 import { createApp, deleteApp, fetchApps, syncApp, updateApp } from '@/api/apps'
 import type { PortalAppResponse } from '@/api/types'
+import AppPluginsDialog from './AppPluginsDialog.vue'
 
 const apps = ref<PortalAppResponse[]>([])
 const isLoading = ref(false)
 const dialogVisible = ref(false)
 const editDialogVisible = ref(false)
+const pluginsDialogVisible = ref(false)
 const isSubmitting = ref(false)
 const syncingAppId = ref<number | null>(null)
+const selectedApp = ref<PortalAppResponse | null>(null)
 
 const form = reactive({
   agentId: '',
@@ -54,6 +57,11 @@ const openEditDialog = (app: PortalAppResponse) => {
   editForm.token = '' // These are not in the response usually, or we don't know
   editForm.encodingAesKey = ''
   editDialogVisible.value = true
+}
+
+const openPluginsDialog = (app: PortalAppResponse) => {
+  selectedApp.value = app
+  pluginsDialogVisible.value = true
 }
 
 const getCallbackUrl = (id: number) => {
@@ -209,6 +217,14 @@ onMounted(() => {
             <el-button
               size="small"
               text
+              :icon="Connection"
+              @click="openPluginsDialog(scope.row)"
+            >
+              插件
+            </el-button>
+            <el-button
+              size="small"
+              text
               :loading="syncingAppId === scope.row.id"
               @click="handleSync(scope.row)"
             >
@@ -297,6 +313,13 @@ onMounted(() => {
         </el-button>
       </template>
     </el-dialog>
+
+    <AppPluginsDialog
+      v-if="selectedApp"
+      v-model:visible="pluginsDialogVisible"
+      :app-id="selectedApp.id"
+      :app-name="selectedApp.name || selectedApp.agentId"
+    />
   </section>
 </template>
 

@@ -8,6 +8,7 @@ import {
   Refresh,
   CopyDocument,
   Box,
+  DataAnalysis,
 } from '@element-plus/icons-vue'
 import {
   fetchPlugins,
@@ -17,11 +18,13 @@ import {
   deletePlugin,
 } from '@/api/plugins'
 import type { PortalPluginResponse } from '@/api/types'
+import PluginMonitoringDialog from './PluginMonitoringDialog.vue'
 
 const plugins = ref<PortalPluginResponse[]>([])
 const isLoading = ref(false)
 const dialogVisible = ref(false)
 const tokenDialogVisible = ref(false)
+const monitoringDialogVisible = ref(false)
 const isSubmitting = ref(false)
 
 const form = reactive({
@@ -32,6 +35,7 @@ const form = reactive({
 
 const currentToken = ref('')
 const currentPluginName = ref('')
+const selectedPluginKey = ref('')
 
 const loadPlugins = async () => {
   isLoading.value = true
@@ -77,6 +81,12 @@ const showTokenDialog = (name: string, token: string) => {
   currentPluginName.value = name
   currentToken.value = token
   tokenDialogVisible.value = true
+}
+
+const openMonitoringDialog = (plugin: PortalPluginResponse) => {
+  selectedPluginKey.value = plugin.pluginKey
+  currentPluginName.value = plugin.name
+  monitoringDialogVisible.value = true
 }
 
 const handleStatusChange = async (plugin: PortalPluginResponse) => {
@@ -215,6 +225,14 @@ onMounted(() => {
                 {{ plugin.isConnected ? '已连接' : '未连接' }}
               </div>
               <div class="plugin-actions">
+                <el-tooltip content="观测" placement="top">
+                  <el-button
+                    circle
+                    size="small"
+                    :icon="DataAnalysis"
+                    @click="openMonitoringDialog(plugin)"
+                  />
+                </el-tooltip>
                 <el-tooltip :content="plugin.isBuiltin ? '内置插件不支持重置 Token' : '重置 Token'" placement="top">
                   <el-button
                     circle
@@ -287,6 +305,12 @@ onMounted(() => {
         </el-button>
       </template>
     </el-dialog>
+
+    <PluginMonitoringDialog
+      v-model:visible="monitoringDialogVisible"
+      :plugin-key="selectedPluginKey"
+      :plugin-name="currentPluginName"
+    />
   </section>
 </template>
 

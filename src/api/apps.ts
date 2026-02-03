@@ -2,6 +2,7 @@ import http from './http'
 import { ensureCsrfToken, unwrapPortalResponse } from './portal'
 import type { PortalResponse } from './portal'
 import type {
+  AppPluginResponse,
   PortalAppApiKeyResponse,
   PortalAppResponse,
 } from './types'
@@ -21,8 +22,41 @@ export interface UpdateAppApiKeyPayload {
   rateLimitPerMinute: number | null
 }
 
+export interface UpdateAppPluginPayload {
+  pluginKey: string
+  configJson: string
+  status: number
+}
+
 export const fetchApps = async () => {
   const response = await http.get<PortalResponse<PortalAppResponse[]>>('/v2/apps')
+  return unwrapPortalResponse(response)
+}
+
+export const fetchAppPlugins = async (appId: number) => {
+  const response = await http.get<PortalResponse<AppPluginResponse[]>>(
+    `/v2/apps/${appId}/plugins`,
+  )
+  return unwrapPortalResponse(response)
+}
+
+export const updateAppPlugin = async (
+  appId: number,
+  payload: UpdateAppPluginPayload,
+) => {
+  await ensureCsrfToken()
+  const response = await http.post<PortalResponse<null>>(
+    `/v2/apps/${appId}/plugins`,
+    payload,
+  )
+  return unwrapPortalResponse(response)
+}
+
+export const deleteAppPlugin = async (appId: number, pluginKey: string) => {
+  await ensureCsrfToken()
+  const response = await http.delete<PortalResponse<null>>(
+    `/v2/apps/${appId}/plugins/${pluginKey}`,
+  )
   return unwrapPortalResponse(response)
 }
 
