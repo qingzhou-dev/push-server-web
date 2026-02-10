@@ -35,11 +35,23 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
+let isRedirectingToLogin = false
+
+const redirectToLogin = () => {
+  if (typeof window === 'undefined' || isRedirectingToLogin) return
+  const path = window.location.pathname
+  if (path === '/login' || path === '/init') return
+  isRedirectingToLogin = true
+  localStorage.removeItem('access_token')
+  const redirect = encodeURIComponent(`${path}${window.location.search}`)
+  window.location.replace(`/login?redirect=${redirect}`)
+}
+
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   (error: AxiosError<{ message?: string }>) => {
     if (error.response?.status === 401) {
-      window.location.reload()
+      redirectToLogin()
       return Promise.reject(error)
     }
 
