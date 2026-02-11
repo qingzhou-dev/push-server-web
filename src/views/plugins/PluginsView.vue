@@ -203,13 +203,16 @@ onMounted(() => {
                 </div>
                 <div class="plugin-key">{{ plugin.pluginKey }}</div>
               </div>
-              <el-switch
-                :model-value="plugin.status === 1"
-                inline-prompt
-                active-text="开"
-                inactive-text="关"
-                @change="() => handleStatusChange(plugin)"
-              />
+              <el-tooltip :content="plugin.isBuiltin ? '内置插件不可禁用' : (plugin.status === 1 ? '禁用插件' : '启用插件')" placement="top">
+                <el-switch
+                  :model-value="plugin.status === 1"
+                  :disabled="plugin.isBuiltin"
+                  inline-prompt
+                  active-text="开"
+                  inactive-text="关"
+                  @change="() => handleStatusChange(plugin)"
+                />
+              </el-tooltip>
             </div>
             
             <div class="plugin-desc">
